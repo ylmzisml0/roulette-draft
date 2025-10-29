@@ -1,12 +1,14 @@
 import React from 'react';
-import { Box, Container, Typography, Button, Card, CardContent, Grid, Dialog, DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemText, Chip } from '@mui/material';
-import { useGameStore } from '../store/useGameStore';
+import { Box, Container, Typography, Button, Card, CardContent, Grid, Dialog, DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemText, Chip, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
+import { useGameStore, FormationPreset } from '../store/useGameStore';
 import { mockAvailablePlayers, mockTeams } from '../data/mockData';
 import PitchBoard from '../components/PitchBoard';
 import RouletteWheel from '../components/RouletteWheel';
-import { Visibility, Refresh } from '@mui/icons-material';
+import { Visibility, Refresh, Settings } from '@mui/icons-material';
 
 export default function DraftPage() {
+  const [confirmDialogOpen, setConfirmDialogOpen] = React.useState(false);
+
   const {
     squads,
     draftPhase,
@@ -16,13 +18,47 @@ export default function DraftPage() {
     selectedSlot,
     availablePlayers,
     isSquadOverviewOpen,
+    isFormationModalOpen,
+    formationModalSquadIndex,
     openSquadOverview,
     closeSquadOverview,
+    openFormationModal,
+    closeFormationModal,
+    swapPlayers,
+    changeFormationForSquad,
     continueAfterSpinResult,
     chooseDraftCandidate,
     selectSlotForCandidate,
     confirmPick,
   } = useGameStore();
+
+  const formationOptions: FormationPreset[] = ['4-3-3', '4-4-2', '3-5-2', '4-2-3-1', '4-1-4-1', '5-3-2', '5-2-3', '4-5-1'];
+
+  const handleDragDrop = (squadIndex: number) => (fromSlotId: string, toSlotId: string) => {
+    swapPlayers(squadIndex, fromSlotId, toSlotId);
+  };
+
+  const handleFormationChange = (squadIndex: number, newFormation: FormationPreset) => {
+    changeFormationForSquad(squadIndex, newFormation);
+    closeFormationModal();
+  };
+
+  // Handle slot selection - open confirmation dialog instead of changing phase
+  const handleSlotSelection = (slotId: string) => {
+    selectSlotForCandidate(slotId);
+    setConfirmDialogOpen(true);
+  };
+
+  // Handle confirmation
+  const handleConfirm = () => {
+    confirmPick();
+    setConfirmDialogOpen(false);
+  };
+
+  // Handle back to slot selection
+  const handleBack = () => {
+    setConfirmDialogOpen(false);
+  };
 
   const currentSquad = squads[currentTurnIndex] || { name: 'Takım', formation: '4-3-3', players: {} };
   const currentTeamId = spinResult?.teamId;
@@ -31,7 +67,17 @@ export default function DraftPage() {
 
   const getAvailablePlayersForTeam = (teamId: string) => {
     const playerIds = availablePlayers[teamId] || [];
-    console.log('getAvailablePlayersForTeam:', { teamId, playerIds, availablePlayers });
+    console.log('getAvailablePlayersForTeam:', { 
+      teamId, 
+      playerIds, 
+      availablePlayersKeys: Object.keys(availablePlayers),
+      mockPlayersCount: mockAvailablePlayers[teamId]?.length || 0
+    });
+    
+    if (!availablePlayers[teamId]) {
+      console.warn(`No players found for teamId=${teamId}`);
+    }
+    
     return playerIds.map(playerId => {
       const teamPlayers = mockAvailablePlayers[teamId] || [];
       return teamPlayers.find(p => p.id === playerId);
@@ -74,6 +120,13 @@ export default function DraftPage() {
         );
 
       case 'choosePlayer':
+        console.log('choosePlayer phase:', { 
+          currentTeamId, 
+          currentTeamName, 
+          spinResult,
+          availablePlayersKeys: Object.keys(availablePlayers)
+        });
+        
         return (
           <Box>
             <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold', textAlign: 'center' }}>
@@ -135,33 +188,12 @@ export default function DraftPage() {
                 squadIndex={currentTurnIndex}
                 formation={currentSquad.formation}
                 players={currentSquad.players}
-                onSlotClick={selectSlotForCandidate}
+                onSlotClick={handleSlotSelection}
                 isInteractive={true}
                 selectedSlot={selectedSlot}
-                size="full"
+                size="compact"
               />
             </Box>
-          </Box>
-        );
-
-      case 'confirm':
-        return (
-          <Box sx={{ textAlign: 'center' }}>
-            <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold' }}>
-              Seçimi Onaylayın
-            </Typography>
-            <Typography variant="body1" sx={{ mb: 4 }}>
-              {mockAvailablePlayers[currentTeamId!]?.find(p => p.id === draftCandidate)?.name} - 
-              {selectedSlot} pozisyonuna yerleştirilecek
-            </Typography>
-            <Button
-              variant="contained"
-              size="large"
-              onClick={confirmPick}
-              sx={{ px: 4 }}
-            >
-              Onayla
-            </Button>
           </Box>
         );
 
@@ -238,27 +270,13 @@ export default function DraftPage() {
         {/* Current Squad Info */}
         <Card sx={{ mb: 4 }}>
           <CardContent>
-            <Grid container spacing={3} alignItems="center">
-              <Grid item xs={12} md={6}>
-                <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
-                  Mevcut Takım: {currentSquad.name}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Formasyon: {currentSquad.formation} | 
-                  Oyuncu Sayısı: {Object.keys(currentSquad.players).length}/11
-                </Typography>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Box sx={{ height: 150 }}>
-                  <PitchBoard
-                    squadIndex={currentTurnIndex}
-                    formation={currentSquad.formation}
-                    players={currentSquad.players}
-                    size="compact"
-                  />
-                </Box>
-              </Grid>
-            </Grid>
+            <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
+              Mevcut Takım: {currentSquad.name}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Formasyon: {currentSquad.formation} | 
+              Oyuncu Sayısı: {Object.keys(currentSquad.players).length}/11
+            </Typography>
           </CardContent>
         </Card>
 
@@ -293,8 +311,11 @@ export default function DraftPage() {
         <Dialog
           open={isSquadOverviewOpen}
           onClose={closeSquadOverview}
-          maxWidth="lg"
           fullWidth
+          maxWidth="xl"
+          PaperProps={{
+            sx: { width: '90vw', height: '90vh', borderRadius: 2 },
+          }}
         >
           <DialogTitle>
             <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
@@ -307,19 +328,35 @@ export default function DraftPage() {
                 <Grid item xs={12} md={6} key={squad.id}>
                   <Card>
                     <CardContent>
-                      <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
-                        {squad.name} ({squad.formation})
-                      </Typography>
-                      <Box sx={{ height: 200, mb: 2 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                          {squad.name} ({squad.formation})
+                        </Typography>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          startIcon={<Settings />}
+                          onClick={() => openFormationModal(index)}
+                          sx={{ ml: 2 }}
+                        >
+                          Formasyonu Değiştir
+                        </Button>
+                      </Box>
+                      <Box sx={{ height: '80vh', mb: 2, position: 'relative', width: '100%' }}>
                         <PitchBoard
                           squadIndex={index}
                           formation={squad.formation}
                           players={squad.players}
-                          size="compact"
+                          size="large"
+                          isDraggable={true}
+                          onDragDrop={handleDragDrop(index)}
                         />
                       </Box>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                         Oyuncu Sayısı: {Object.keys(squad.players).length}/11
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                        Oyuncuların yerini değiştirmek için sürükle bırak yapabilir, formasyonu değiştirmek için butonu kullanabilirsiniz.
                       </Typography>
                     </CardContent>
                   </Card>
@@ -329,6 +366,83 @@ export default function DraftPage() {
           </DialogContent>
           <DialogActions>
             <Button onClick={closeSquadOverview}>Kapat</Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Formation Selection Dialog */}
+        <Dialog
+          open={isFormationModalOpen}
+          onClose={closeFormationModal}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>
+            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+              Formasyon Seç
+            </Typography>
+          </DialogTitle>
+          <DialogContent>
+            {formationModalSquadIndex !== null && (
+              <FormControl fullWidth sx={{ mt: 2 }}>
+                <InputLabel>Formasyon</InputLabel>
+                <Select
+                  value={squads[formationModalSquadIndex]?.formation || '4-3-3'}
+                  label="Formasyon"
+                  onChange={(e) => handleFormationChange(formationModalSquadIndex, e.target.value as FormationPreset)}
+                >
+                  {formationOptions.map((formation) => (
+                    <MenuItem key={formation} value={formation}>
+                      {formation}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 3 }}>
+              Not: Mevcut oyuncular aynı pozisyon korunarak yeni formasyona taşınacak. 
+              Uyumsuz oyuncular yedek kulübesine gönderilecektir.
+            </Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={closeFormationModal}>İptal</Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Confirmation Dialog */}
+        <Dialog
+          open={confirmDialogOpen}
+          onClose={handleBack}
+          PaperProps={{
+            sx: { borderRadius: 2, p: 4, maxWidth: 400 },
+          }}
+        >
+          <DialogTitle>
+            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+              Seçimi Onayla
+            </Typography>
+          </DialogTitle>
+          <DialogContent>
+            {draftCandidate && selectedSlot && (
+              <>
+                <Typography variant="body1" sx={{ fontWeight: 600, mb: 1 }}>
+                  {mockAvailablePlayers[currentTeamId!]?.find(p => p.id === draftCandidate)?.name}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  {mockAvailablePlayers[currentTeamId!]?.find(p => p.id === draftCandidate)?.position}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {currentTeamName} → {selectedSlot}
+                </Typography>
+              </>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button variant="outlined" onClick={handleBack}>
+              Geri Dön
+            </Button>
+            <Button variant="contained" color="primary" onClick={handleConfirm}>
+              Onayla
+            </Button>
           </DialogActions>
         </Dialog>
       </Container>

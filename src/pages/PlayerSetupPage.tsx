@@ -110,7 +110,7 @@ export default function PlayerSetupPage() {
                     </Grid>
                   </Grid>
 
-                  <Box sx={{ height: 260 }}>
+                  <Box sx={{ height: 500 }}>
                     <PitchBoard
                       squadIndex={index}
                       formation={squad.formation}

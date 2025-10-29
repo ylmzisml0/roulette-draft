@@ -1,163 +1,180 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Box, Button, Typography } from '@mui/material';
+import { Wheel } from 'react-custom-roulette';
 import { useGameStore } from '../store/useGameStore';
 import { mockTeams } from '../data/mockData';
 
 export default function RouletteWheel() {
+  // Pull correct state fields from Zustand
   const { selectedTeams, finishSpin, draftPhase } = useGameStore();
+
+  const [mustSpin, setMustSpin] = useState(false);
+  const [prizeNumber, setPrizeNumber] = useState(0);
   const [isSpinning, setIsSpinning] = useState(false);
-  const [rotation, setRotation] = useState(0);
 
-  const allowedTeams = mockTeams.filter(team => selectedTeams.includes(team.id));
-  const sliceAngle = allowedTeams.length > 0 ? 360 / allowedTeams.length : 0;
+  // Debug: mustSpin değişikliklerini log'la
+  useEffect(() => {
+    console.log('mustSpin değişti:', mustSpin);
+  }, [mustSpin]);
 
+  // Filter only teams user allowed into the wheel
+  // Note: using selectedTeams as allowedTeams (teams chosen on /leagues)
+  const allowedTeams = selectedTeams || [];
+  const wheelTeams = mockTeams.filter((team) =>
+    allowedTeams.includes(team.id)
+  );
+  const teamCount = wheelTeams.length;
+
+  // Data format required by react-custom-roulette
+  const wheelData = wheelTeams.map((team, idx) => ({
+    option: team.name,
+    style: {
+      backgroundColor: idx % 2 === 0 ? '#ffffff' : '#eef8f0',
+      textColor: '#0b2d17',
+    },
+    teamId: team.id,
+    teamName: team.name,
+  }));
+
+
+  // Start spin
   const handleSpin = () => {
-    if (isSpinning || draftPhase !== 'spin' || allowedTeams.length === 0) return;
-    
-    setIsSpinning(true);
-    const randomRotation = Math.random() * 360 + 720; // At least 2 full rotations
-    const newRotation = rotation + randomRotation;
-    setRotation(newRotation);
+    if (isSpinning || draftPhase !== 'spin' || teamCount === 0) return;
 
-    // Simulate spin duration
-    setTimeout(() => {
-      const finalAngle = newRotation % 360;
-      const selectedIndex = Math.floor((360 - finalAngle) / sliceAngle) % allowedTeams.length;
-      const selectedTeam = allowedTeams[selectedIndex];
-      
-      console.log('Spin result:', { finalAngle, selectedIndex, selectedTeam });
-      finishSpin(selectedTeam.id, selectedTeam.name);
-      setIsSpinning(false);
-    }, 3000);
+    // Choose winner index deterministically before triggering animation
+    const winnerIndex = Math.floor(Math.random() * teamCount);
+    const winnerTeam = wheelTeams[winnerIndex];
+
+    console.log('Spin başlatılıyor:', { 
+      winnerIndex, 
+      teamCount,
+      winnerTeamName: winnerTeam?.name,
+      winnerTeamId: winnerTeam?.id,
+      wheelDataLength: wheelData.length
+    });
+
+    // Mark that we're spinning (disable button)
+    setIsSpinning(true);
+    
+    // Set prizeNumber first
+    setPrizeNumber(winnerIndex);
+    
+    // Immediately trigger spin - if mustSpin is false, set to true directly
+    // If mustSpin is true, reset it first then set to true (for false->true transition)
+    if (mustSpin) {
+      setMustSpin(false);
+      // Use double RAF to ensure state update is processed
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setMustSpin(true);
+        });
+      });
+    } else {
+      // Already false, can set to true immediately
+      setMustSpin(true);
+    }
+  };
+
+  // After spin ends
+  const handleStopSpinning = () => {
+    console.log('Spin durdu, prizeNumber:', prizeNumber);
+    setMustSpin(false);
+    setIsSpinning(false);
+
+    // Write the final winner into global store
+    // prizeNumber is the index in wheelData array
+    const winnerTeam = wheelTeams[prizeNumber];
+    console.log('Kazanan takım:', { prizeNumber, winnerTeam, wheelTeamsLength: wheelTeams.length });
+    
+    if (winnerTeam) {
+      finishSpin(winnerTeam.id, winnerTeam.name);
+    }
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, position: 'relative' }}>
-      {/* Pointer */}
-      <Box
-        sx={{
-          position: 'absolute',
-          top: -10,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: 0,
-          height: 0,
-          borderLeft: '10px solid transparent',
-          borderRight: '10px solid transparent',
-          borderTop: '20px solid #1f4d2d',
-          zIndex: 10,
-        }}
-      />
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+      }}
+    >
+      {/* Çark */}
+      {teamCount > 0 && (
+        <Box
+          sx={{
+            position: 'relative',
+            display: 'inline-block',
+          }}
+        >
+          <Wheel
+            mustStartSpinning={mustSpin}
+            prizeNumber={prizeNumber}
+            data={wheelData}
+            onStopSpinning={handleStopSpinning}
+            backgroundColors={['#ffffff', '#eef8f0']}
+            textColors={['#0b2d17']}
+            outerBorderColor="#1f4d2d"
+            outerBorderWidth={3}
+            innerRadius={18}
+            innerBorderColor="#1f4d2d"
+            innerBorderWidth={2}
+            radiusLineColor="#1f4d2d"
+            radiusLineWidth={2}
+            fontSize={teamCount > 10 ? 11 : teamCount > 8 ? 12 : 13}
+            fontWeight={700}
+            textDistance={55}
+            spinDuration={0.4}
+            pointerProps={{
+              style: {
+                width: '20px',
+                height: '20px',
+                top: '50px',
+                right: '15px',
+                left: '380px',
+                filter: 'brightness(0) saturate(100%) invert(26%) sepia(62%) saturate(1157%) hue-rotate(95deg) brightness(95%) contrast(90%)',
+              }
+            }}
+            disableInitialAnimation={true}
+          />
+        </Box>
+      )}
 
-      {/* Wheel */}
-      <Box
-        sx={{
-          position: 'relative',
-          width: 300,
-          height: 300,
-          borderRadius: '50%',
-          border: '4px solid #1f4d2d',
-          overflow: 'hidden',
-          transform: `rotate(${rotation}deg)`,
-          transition: isSpinning ? 'transform 3s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
-        }}
+      {/* Alt bilgi: takım sayısı */}
+      <Typography
+        variant="body2"
+        color="text.secondary"
+        sx={{ mt: 2, textAlign: 'center' }}
       >
-        {allowedTeams.map((team, index) => {
-          const startAngle = index * sliceAngle;
-          const endAngle = (index + 1) * sliceAngle;
-          const midAngle = (startAngle + endAngle) / 2;
-          
-          // Calculate slice path
-          const radius = 150;
-          const centerX = 150;
-          const centerY = 150;
-          
-          const startX = centerX + radius * Math.cos((startAngle - 90) * Math.PI / 180);
-          const startY = centerY + radius * Math.sin((startAngle - 90) * Math.PI / 180);
-          const endX = centerX + radius * Math.cos((endAngle - 90) * Math.PI / 180);
-          const endY = centerY + radius * Math.sin((endAngle - 90) * Math.PI / 180);
-          
-          const largeArcFlag = sliceAngle > 180 ? 1 : 0;
-          const pathData = [
-            `M ${centerX} ${centerY}`,
-            `L ${startX} ${startY}`,
-            `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${endX} ${endY}`,
-            'Z'
-          ].join(' ');
+        Çarkta {teamCount} takım var
+      </Typography>
 
-          return (
-            <Box
-              key={team.id}
-              sx={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-              }}
-            >
-              <svg
-                width="300"
-                height="300"
-                style={{ position: 'absolute', top: 0, left: 0 }}
-              >
-                <path
-                  d={pathData}
-                  fill={index % 2 === 0 ? '#ffffff' : '#eef8f0'}
-                  stroke="#1f4d2d"
-                  strokeWidth="2"
-                />
-                
-                {/* Team name text */}
-                <text
-                  x={centerX + (radius * 0.5) * Math.cos((midAngle - 90) * Math.PI / 180)}
-                  y={centerY + (radius * 0.5) * Math.sin((midAngle - 90) * Math.PI / 180)}
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  transform={`rotate(${midAngle > 90 && midAngle < 270 ? midAngle + 180 : midAngle}, ${centerX + (radius * 0.5) * Math.cos((midAngle - 90) * Math.PI / 180)}, ${centerY + (radius * 0.5) * Math.sin((midAngle - 90) * Math.PI / 180)})`}
-                  style={{
-                    fontSize: '12px',
-                    fontWeight: 'bold',
-                    fill: '#0b2d17',
-                  }}
-                >
-                  {team.name.length > 12 ? (
-                    <>
-                      <tspan x={centerX + (radius * 0.5) * Math.cos((midAngle - 90) * Math.PI / 180)} dy="-5">
-                        {team.name.split(' ')[0]}
-                      </tspan>
-                      <tspan x={centerX + (radius * 0.5) * Math.cos((midAngle - 90) * Math.PI / 180)} dy="10">
-                        {team.name.split(' ')[1] || ''}
-                      </tspan>
-                    </>
-                  ) : (
-                    team.name
-                  )}
-                </text>
-              </svg>
-            </Box>
-          );
-        })}
-      </Box>
-
+      {/* Spin butonu */}
       <Button
         variant="contained"
+        color="primary"
         size="large"
         onClick={handleSpin}
-        disabled={isSpinning || draftPhase !== 'spin' || allowedTeams.length === 0}
+        disabled={isSpinning || draftPhase !== 'spin' || teamCount === 0}
         sx={{
-          mt: 2,
+          mt: 3,
           px: 4,
           py: 1.5,
           fontSize: '1.1rem',
           fontWeight: 'bold',
+          borderRadius: 2,
         }}
       >
-        {isSpinning ? 'Döndürülüyor...' : 'Draft Et'}
+        {isSpinning ? 'Döndürülüyor...' : 'Çarkı Çevir'}
       </Button>
 
-      {allowedTeams.length === 0 && (
-        <Typography variant="body2" color="error" sx={{ textAlign: 'center' }}>
+      {/* Uyarı */}
+      {teamCount === 0 && (
+        <Typography
+          variant="body2"
+          color="error"
+          sx={{ mt: 1, textAlign: 'center' }}
+        >
           Önce takım seçimi yapın
         </Typography>
       )}
