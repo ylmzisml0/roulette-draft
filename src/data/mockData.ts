@@ -1,383 +1,1040 @@
-export type League = {
+// ============================================
+// API Model TypeScript Interfaces
+// ============================================
+
+export interface CompetitionResult {
   id: string;
   name: string;
-  icon: string;
-};
+  country: string;
+  clubs: number;
+  players: number;
+  totalMarketValue: number;
+  meanMarketValue: number;
+  continent: string;
+}
 
-export const mockLeagues: League[] = [
-  { id: 'superlig', name: 'Türkiye Süper Lig', icon: '🇹🇷' },
-  { id: 'premierleague', name: 'Premier League', icon: '🏴' },
-  { id: 'laliga', name: 'La Liga', icon: '🇪🇸' },
-  { id: 'bundesliga', name: 'Bundesliga', icon: '🇩🇪' },
-  { id: 'ucl', name: 'Champions League', icon: '🏆' },
-  { id: 'uel', name: 'Europa League', icon: '⭐' },
-];
+export interface CompetitionSearchResponse {
+  updatedAt: string;
+  query: string;
+  pageNumber: number;
+  lastPageNumber: number;
+  results: CompetitionResult[];
+}
 
-export type Team = {
+export interface Club {
   id: string;
-  leagueId: string;
   name: string;
-  shortCode: string;
+}
+
+export interface CompetitionClubsResponse {
+  updatedAt: string;
+  id: string;
+  name: string;
+  seasonId: string;
+  clubs: Club[];
+}
+
+export interface ClubSearchResult {
+  id: string;
+  url: string;
+  name: string;
+  country: string;
+  squad: number;
+  marketValue: number;
+}
+
+export interface ClubSearchResponse {
+  updatedAt: string;
+  query: string;
+  pageNumber: number;
+  lastPageNumber: number;
+  results: ClubSearchResult[];
+}
+
+export interface Player {
+  id: string;
+  name: string;
+  position: string;
+  dateOfBirth: string;
+  age: number;
+  nationality: string[];
+  currentClub: string;
+  height: number;
+  foot: string;
+  joinedOn: string;
+  joined: string;
+  signedFrom: string;
+  contract: string;
+  marketValue: number;
+  status: string;
+}
+
+export interface ClubPlayersResponse {
+  updatedAt: string;
+  id: string;
+  players: Player[];
+}
+
+// ============================================
+// Helper Functions for Date Generation
+// ============================================
+
+const getISOString = () => new Date().toISOString();
+
+const getBirthDate = (age: number): string => {
+  const year = new Date().getFullYear() - age;
+  const month = Math.floor(Math.random() * 12) + 1;
+  const day = Math.floor(Math.random() * 28) + 1;
+  return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
 };
 
-export const mockTeams: Team[] = [
-  // Süper Lig
-  { id: 'fenerbahce', leagueId: 'superlig', name: 'Fenerbahçe', shortCode: 'FB' },
-  { id: 'galatasaray', leagueId: 'superlig', name: 'Galatasaray', shortCode: 'GS' },
-  { id: 'besiktas', leagueId: 'superlig', name: 'Beşiktaş', shortCode: 'BJK' },
-  { id: 'trabzonspor', leagueId: 'superlig', name: 'Trabzonspor', shortCode: 'TS' },
-  { id: 'basaksehir', leagueId: 'superlig', name: 'Başakşehir', shortCode: 'BŞK' },
-  { id: 'alanyaspor', leagueId: 'superlig', name: 'Alanyaspor', shortCode: 'ALA' },
-  { id: 'antalyaspor', leagueId: 'superlig', name: 'Antalyaspor', shortCode: 'ANT' },
-  { id: 'sivasspor', leagueId: 'superlig', name: 'Sivasspor', shortCode: 'SVS' },
-  { id: 'konyaspor', leagueId: 'superlig', name: 'Konyaspor', shortCode: 'KON' },
-  { id: 'adana', leagueId: 'superlig', name: 'Adana Demirspor', shortCode: 'ADS' },
-  { id: 'kasimpasa', leagueId: 'superlig', name: 'Kasımpaşa', shortCode: 'KAS' },
-  { id: 'gaziantep', leagueId: 'superlig', name: 'Gaziantep FK', shortCode: 'GZT' },
+const getJoinedDate = (yearsAgo: number): string => {
+  const date = new Date();
+  date.setFullYear(date.getFullYear() - yearsAgo);
+  return date.toISOString().split('T')[0];
+};
 
-  // Premier League
-  { id: 'manchestercity', leagueId: 'premierleague', name: 'Manchester City', shortCode: 'MCI' },
-  { id: 'arsenal', leagueId: 'premierleague', name: 'Arsenal', shortCode: 'ARS' },
-  { id: 'liverpool', leagueId: 'premierleague', name: 'Liverpool', shortCode: 'LIV' },
-  { id: 'manutd', leagueId: 'premierleague', name: 'Manchester United', shortCode: 'MUN' },
-  { id: 'chelsea', leagueId: 'premierleague', name: 'Chelsea', shortCode: 'CHE' },
-  { id: 'tottenham', leagueId: 'premierleague', name: 'Tottenham', shortCode: 'TOT' },
-  { id: 'newcastle', leagueId: 'premierleague', name: 'Newcastle', shortCode: 'NEW' },
-  { id: 'brighton', leagueId: 'premierleague', name: 'Brighton', shortCode: 'BHA' },
-  { id: 'westham', leagueId: 'premierleague', name: 'West Ham', shortCode: 'WHU' },
-  { id: 'astonvilla', leagueId: 'premierleague', name: 'Aston Villa', shortCode: 'AVL' },
-  { id: 'crystalpalace', leagueId: 'premierleague', name: 'Crystal Palace', shortCode: 'CRY' },
-  { id: 'fulham', leagueId: 'premierleague', name: 'Fulham', shortCode: 'FUL' },
+const getContractDate = (yearsFromNow: number): string => {
+  const date = new Date();
+  date.setFullYear(date.getFullYear() + yearsFromNow);
+  return date.toISOString().split('T')[0];
+};
 
-  // La Liga
-  { id: 'realmadrid', leagueId: 'laliga', name: 'Real Madrid', shortCode: 'RMA' },
-  { id: 'barcelona', leagueId: 'laliga', name: 'Barcelona', shortCode: 'BAR' },
-  { id: 'atletico', leagueId: 'laliga', name: 'Atletico Madrid', shortCode: 'ATM' },
-  { id: 'sevilla', leagueId: 'laliga', name: 'Sevilla', shortCode: 'SEV' },
-  { id: 'realsociedad', leagueId: 'laliga', name: 'Real Sociedad', shortCode: 'RSO' },
-  { id: 'betis', leagueId: 'laliga', name: 'Real Betis', shortCode: 'BET' },
-  { id: 'valencia', leagueId: 'laliga', name: 'Valencia', shortCode: 'VAL' },
-  { id: 'villareal', leagueId: 'laliga', name: 'Villarreal', shortCode: 'VIL' },
-  { id: 'athletic', leagueId: 'laliga', name: 'Athletic Bilbao', shortCode: 'ATH' },
-  { id: 'osasuna', leagueId: 'laliga', name: 'Osasuna', shortCode: 'OSA' },
-  { id: 'mallorca', leagueId: 'laliga', name: 'Mallorca', shortCode: 'MAL' },
-  { id: 'girona', leagueId: 'laliga', name: 'Girona', shortCode: 'GIR' },
+// ============================================
+// Mock Data - Competitions Search
+// ============================================
 
-  // Bundesliga
-  { id: 'bayern', leagueId: 'bundesliga', name: 'Bayern Munich', shortCode: 'BAY' },
-  { id: 'dortmund', leagueId: 'bundesliga', name: 'Borussia Dortmund', shortCode: 'BVB' },
-  { id: 'leipzig', leagueId: 'bundesliga', name: 'RB Leipzig', shortCode: 'RBL' },
-  { id: 'leverkusen', leagueId: 'bundesliga', name: 'Bayer Leverkusen', shortCode: 'B04' },
-  { id: 'freiburg', leagueId: 'bundesliga', name: 'Freiburg', shortCode: 'SCF' },
-  { id: 'eintracht', leagueId: 'bundesliga', name: 'Eintracht Frankfurt', shortCode: 'SGE' },
-  { id: 'union', leagueId: 'bundesliga', name: 'Union Berlin', shortCode: 'FCU' },
-  { id: 'wolfsburg', leagueId: 'bundesliga', name: 'Wolfsburg', shortCode: 'WOB' },
-  { id: 'mainz', leagueId: 'bundesliga', name: 'Mainz', shortCode: 'M05' },
-  { id: 'gladbach', leagueId: 'bundesliga', name: 'Borussia Mönchengladbach', shortCode: 'BMG' },
-  { id: 'hoffenheim', leagueId: 'bundesliga', name: 'Hoffenheim', shortCode: 'TSG' },
-  { id: 'bochum', leagueId: 'bundesliga', name: 'Bochum', shortCode: 'VFL' },
+export const mockCompetitions: CompetitionSearchResponse = {
+  updatedAt: getISOString(),
+  query: "super lig",
+  pageNumber: 1,
+  lastPageNumber: 4,
+  results: [
+    {
+      id: "super-lig",
+      name: "Trendyol Süper Lig",
+      country: "Türkiye",
+      clubs: 20,
+      players: 520,
+      totalMarketValue: 1200000000,
+      meanMarketValue: 2300000,
+      continent: "Europe"
+    },
+    {
+      id: "premier-league",
+      name: "Premier League",
+      country: "England",
+      clubs: 20,
+      players: 550,
+      totalMarketValue: 8500000000,
+      meanMarketValue: 15000000,
+      continent: "Europe"
+    },
+    {
+      id: "la-liga",
+      name: "La Liga",
+      country: "Spain",
+      clubs: 20,
+      players: 530,
+      totalMarketValue: 7200000000,
+      meanMarketValue: 13500000,
+      continent: "Europe"
+    },
+    {
+      id: "serie-a",
+      name: "Serie A",
+      country: "Italy",
+      clubs: 20,
+      players: 540,
+      totalMarketValue: 6500000000,
+      meanMarketValue: 12000000,
+      continent: "Europe"
+    }
+  ]
+};
+
+// ============================================
+// Mock Data - Competition Clubs
+// ============================================
+
+export const mockCompetitionClubs: CompetitionClubsResponse[] = [
+  {
+    updatedAt: getISOString(),
+    id: "super-lig",
+    name: "Trendyol Süper Lig",
+    seasonId: "2024-2025",
+    clubs: [
+      { id: "fenerbahce", name: "Fenerbahçe" },
+      { id: "galatasaray", name: "Galatasaray" },
+      { id: "besiktas", name: "Beşiktaş" },
+      { id: "trabzonspor", name: "Trabzonspor" },
+      { id: "basaksehir", name: "Başakşehir" },
+      { id: "alanyaspor", name: "Alanyaspor" },
+      { id: "sivasspor", name: "Sivasspor" },
+      { id: "konyaspor", name: "Konyaspor" },
+      { id: "adana-demirspor", name: "Adana Demirspor" },
+      { id: "kasimpasa", name: "Kasımpaşa" },
+      { id: "gaziantep-fk", name: "Gaziantep FK" },
+      { id: "ankaragucu", name: "Ankaragücü" },
+      { id: "antalyaspor", name: "Antalyaspor" },
+      { id: "istanbulspor", name: "İstanbulspor" },
+      { id: "samsunspor", name: "Samsunspor" },
+      { id: "hatayspor", name: "Hatayspor" },
+      { id: "rizespor", name: "Rizespor" },
+      { id: "pendikspor", name: "Pendikspor" }
+    ]
+  },
+  {
+    updatedAt: getISOString(),
+    id: "premier-league",
+    name: "Premier League",
+    seasonId: "2024-2025",
+    clubs: [
+      { id: "manchester-city", name: "Manchester City" },
+      { id: "arsenal", name: "Arsenal" },
+      { id: "liverpool", name: "Liverpool" },
+      { id: "manchester-united", name: "Manchester United" },
+      { id: "chelsea", name: "Chelsea" }
+    ]
+  },
+  {
+    updatedAt: getISOString(),
+    id: "la-liga",
+    name: "La Liga",
+    seasonId: "2024-2025",
+    clubs: [
+      { id: "real-madrid", name: "Real Madrid" },
+      { id: "barcelona", name: "Barcelona" },
+      { id: "atletico-madrid", name: "Atlético Madrid" },
+      { id: "sevilla", name: "Sevilla" },
+      { id: "real-sociedad", name: "Real Sociedad" }
+    ]
+  },
+  {
+    updatedAt: getISOString(),
+    id: "serie-a",
+    name: "Serie A",
+    seasonId: "2024-2025",
+    clubs: [
+      { id: "juventus", name: "Juventus" },
+      { id: "inter-milan", name: "Inter Milan" },
+      { id: "ac-milan", name: "AC Milan" },
+      { id: "napoli", name: "Napoli" },
+      { id: "roma", name: "AS Roma" }
+    ]
+  }
 ];
 
-export type RealPlayer = {
-  id: string;             // internal unique id, still needed for drafting logic
-  teamId: string;         // internal key like "alanyaspor" or "fenerbahce"
-  teamName: string;       // e.g. "Alanyaspor"
-  name: string;           // e.g. "Baran Moğultay"
-  position: string;       // e.g. "Left-Back"
-  nationality: string;    // e.g. "Türkiye"
-  marketValue: string;    // e.g. "€250k"
+// ============================================
+// Mock Data - Club Search
+// ============================================
+
+export const mockClubs: ClubSearchResponse = {
+  updatedAt: getISOString(),
+  query: "all",
+  pageNumber: 1,
+  lastPageNumber: 1,
+  results: [
+    ...mockCompetitionClubs[0].clubs.map(club => ({
+      id: club.id,
+      url: `https://example.com/clubs/${club.id}`,
+      name: club.name,
+      country: "Türkiye",
+      squad: 25,
+      marketValue: Math.floor(Math.random() * 50000000) + 5000000
+    })),
+    ...mockCompetitionClubs[1].clubs.map(club => ({
+      id: club.id,
+      url: `https://example.com/clubs/${club.id}`,
+      name: club.name,
+      country: "England",
+      squad: 28,
+      marketValue: Math.floor(Math.random() * 500000000) + 100000000
+    })),
+    ...mockCompetitionClubs[2].clubs.map(club => ({
+      id: club.id,
+      url: `https://example.com/clubs/${club.id}`,
+      name: club.name,
+      country: "Spain",
+      squad: 26,
+      marketValue: Math.floor(Math.random() * 400000000) + 80000000
+    })),
+    ...mockCompetitionClubs[3].clubs.map(club => ({
+      id: club.id,
+      url: `https://example.com/clubs/${club.id}`,
+      name: club.name,
+      country: "Italy",
+      squad: 27,
+      marketValue: Math.floor(Math.random() * 300000000) + 70000000
+    }))
+  ]
 };
 
-export type AvailablePlayersByTeam = Record<string, RealPlayer[]>;
+// ============================================
+// Mock Data - Club Players
+// ============================================
 
-export const mockAvailablePlayers: AvailablePlayersByTeam = {
-  fenerbahce: [
-    { id: 'fb-gk1', teamId: 'fenerbahce', teamName: 'Fenerbahçe', name: 'Dominik Livaković', position: 'GK', nationality: 'Hırvatistan', marketValue: '€8M' },
-    { id: 'fb-gk2', teamId: 'fenerbahce', teamName: 'Fenerbahçe', name: 'İrfan Egribayat', position: 'GK', nationality: 'Türkiye', marketValue: '€500K' },
-    { id: 'fb-def1', teamId: 'fenerbahce', teamName: 'Fenerbahçe', name: 'Ferdi Kadıoğlu', position: 'LB', nationality: 'Türkiye', marketValue: '€15M' },
-    { id: 'fb-def2', teamId: 'fenerbahce', teamName: 'Fenerbahçe', name: 'Attila Szalai', position: 'CB', nationality: 'Macaristan', marketValue: '€12M' },
-    { id: 'fb-def3', teamId: 'fenerbahce', teamName: 'Fenerbahçe', name: 'Serdar Aziz', position: 'CB', nationality: 'Türkiye', marketValue: '€3M' },
-    { id: 'fb-def4', teamId: 'fenerbahce', teamName: 'Fenerbahçe', name: 'Osayi-Samuel', position: 'RB', nationality: 'Nijerya', marketValue: '€5M' },
-    { id: 'fb-mid1', teamId: 'fenerbahce', teamName: 'Fenerbahçe', name: 'İsmail Yüksek', position: 'CM', nationality: 'Türkiye', marketValue: '€8M' },
-    { id: 'fb-mid2', teamId: 'fenerbahce', teamName: 'Fenerbahçe', name: 'Fred', position: 'CM', nationality: 'Brezilya', marketValue: '€20M' },
-    { id: 'fb-mid3', teamId: 'fenerbahce', teamName: 'Fenerbahçe', name: 'Sebastian Szymański', position: 'CAM', nationality: 'Polonya', marketValue: '€10M' },
-    { id: 'fb-mid4', teamId: 'fenerbahce', teamName: 'Fenerbahçe', name: 'İrfan Can Kahveci', position: 'CM', nationality: 'Türkiye', marketValue: '€6M' },
-    { id: 'fb-att1', teamId: 'fenerbahce', teamName: 'Fenerbahçe', name: 'Edin Džeko', position: 'ST', nationality: 'Bosna-Hersek', marketValue: '€2M' },
-    { id: 'fb-att2', teamId: 'fenerbahce', teamName: 'Fenerbahçe', name: 'Michy Batshuayi', position: 'ST', nationality: 'Belçika', marketValue: '€8M' },
-    { id: 'fb-att3', teamId: 'fenerbahce', teamName: 'Fenerbahçe', name: 'Joshua King', position: 'LW', nationality: 'Norveç', marketValue: '€4M' },
-    { id: 'fb-att4', teamId: 'fenerbahce', teamName: 'Fenerbahçe', name: 'Ryan Kent', position: 'RW', nationality: 'İngiltere', marketValue: '€3M' },
-    { id: 'fb-att5', teamId: 'fenerbahce', teamName: 'Fenerbahçe', name: 'Cengiz Ünder', position: 'RW', nationality: 'Türkiye', marketValue: '€12M' },
-  ],
-  galatasaray: [
-    { id: 'gs-gk1', teamId: 'galatasaray', teamName: 'Galatasaray', name: 'Fernando Muslera', position: 'GK', nationality: 'Uruguay', marketValue: '€3M' },
-    { id: 'gs-gk2', teamId: 'galatasaray', teamName: 'Galatasaray', name: 'Jankat Yılmaz', position: 'GK', nationality: 'Türkiye', marketValue: '€1M' },
-    { id: 'gs-def1', teamId: 'galatasaray', teamName: 'Galatasaray', name: 'Abdülkerim Bardakcı', position: 'CB', nationality: 'Türkiye', marketValue: '€5M' },
-    { id: 'gs-def2', teamId: 'galatasaray', teamName: 'Galatasaray', name: 'Davinson Sánchez', position: 'CB', nationality: 'Kolombiya', marketValue: '€15M' },
-    { id: 'gs-def3', teamId: 'galatasaray', teamName: 'Galatasaray', name: 'Angeliño', position: 'LB', nationality: 'İspanya', marketValue: '€8M' },
-    { id: 'gs-def4', teamId: 'galatasaray', teamName: 'Galatasaray', name: 'Sacha Boey', position: 'RB', nationality: 'Fransa', marketValue: '€12M' },
-    { id: 'gs-mid1', teamId: 'galatasaray', teamName: 'Galatasaray', name: 'Lucas Torreira', position: 'CDM', nationality: 'Uruguay', marketValue: '€18M' },
-    { id: 'gs-mid2', teamId: 'galatasaray', teamName: 'Galatasaray', name: 'Kerem Demirbay', position: 'CM', nationality: 'Türkiye', marketValue: '€6M' },
-    { id: 'gs-mid3', teamId: 'galatasaray', teamName: 'Galatasaray', name: 'Dries Mertens', position: 'CAM', nationality: 'Belçika', marketValue: '€4M' },
-    { id: 'gs-mid4', teamId: 'galatasaray', teamName: 'Galatasaray', name: 'Yunus Akgün', position: 'RW', nationality: 'Türkiye', marketValue: '€8M' },
-    { id: 'gs-att1', teamId: 'galatasaray', teamName: 'Galatasaray', name: 'Mauro Icardi', position: 'ST', nationality: 'Arjantin', marketValue: '€25M' },
-    { id: 'gs-att2', teamId: 'galatasaray', teamName: 'Galatasaray', name: 'Wilfried Zaha', position: 'LW', nationality: 'Fildişi Sahili', marketValue: '€12M' },
-    { id: 'gs-att3', teamId: 'galatasaray', teamName: 'Galatasaray', name: 'Tete', position: 'RW', nationality: 'Brezilya', marketValue: '€10M' },
-    { id: 'gs-att4', teamId: 'galatasaray', teamName: 'Galatasaray', name: 'Barış Alper Yılmaz', position: 'ST', nationality: 'Türkiye', marketValue: '€4M' },
-    { id: 'gs-att5', teamId: 'galatasaray', teamName: 'Galatasaray', name: 'Hakim Ziyech', position: 'CAM', nationality: 'Fas', marketValue: '€15M' },
-  ],
-  manchestercity: [
-    { id: 'mci-gk1', teamId: 'manchestercity', teamName: 'Manchester City', name: 'Ederson', position: 'GK', nationality: 'Brezilya', marketValue: '€50M' },
-    { id: 'mci-gk2', teamId: 'manchestercity', teamName: 'Manchester City', name: 'Stefan Ortega', position: 'GK', nationality: 'Almanya', marketValue: '€5M' },
-    { id: 'mci-def1', teamId: 'manchestercity', teamName: 'Manchester City', name: 'Rúben Dias', position: 'CB', nationality: 'Portekiz', marketValue: '€80M' },
-    { id: 'mci-def2', teamId: 'manchestercity', teamName: 'Manchester City', name: 'John Stones', position: 'CB', nationality: 'İngiltere', marketValue: '€40M' },
-    { id: 'mci-def3', teamId: 'manchestercity', teamName: 'Manchester City', name: 'Nathan Aké', position: 'LB', nationality: 'Hollanda', marketValue: '€35M' },
-    { id: 'mci-def4', teamId: 'manchestercity', teamName: 'Manchester City', name: 'Kyle Walker', position: 'RB', nationality: 'İngiltere', marketValue: '€15M' },
-    { id: 'mci-mid1', teamId: 'manchestercity', teamName: 'Manchester City', name: 'Rodri', position: 'CDM', nationality: 'İspanya', marketValue: '€100M' },
-    { id: 'mci-mid2', teamId: 'manchestercity', teamName: 'Manchester City', name: 'Kevin De Bruyne', position: 'CAM', nationality: 'Belçika', marketValue: '€80M' },
-    { id: 'mci-mid3', teamId: 'manchestercity', teamName: 'Manchester City', name: 'Bernardo Silva', position: 'CM', nationality: 'Portekiz', marketValue: '€70M' },
-    { id: 'mci-mid4', teamId: 'manchestercity', teamName: 'Manchester City', name: 'Phil Foden', position: 'CAM', nationality: 'İngiltere', marketValue: '€90M' },
-    { id: 'mci-att1', teamId: 'manchestercity', teamName: 'Manchester City', name: 'Erling Haaland', position: 'ST', nationality: 'Norveç', marketValue: '€180M' },
-    { id: 'mci-att2', teamId: 'manchestercity', teamName: 'Manchester City', name: 'Jack Grealish', position: 'LW', nationality: 'İngiltere', marketValue: '€60M' },
-    { id: 'mci-att3', teamId: 'manchestercity', teamName: 'Manchester City', name: 'Jeremy Doku', position: 'RW', nationality: 'Belçika', marketValue: '€50M' },
-    { id: 'mci-att4', teamId: 'manchestercity', teamName: 'Manchester City', name: 'Julian Álvarez', position: 'ST', nationality: 'Arjantin', marketValue: '€80M' },
-    { id: 'mci-att5', teamId: 'manchestercity', teamName: 'Manchester City', name: 'Cole Palmer', position: 'RW', nationality: 'İngiltere', marketValue: '€40M' },
-  ],
-  realmadrid: [
-    { id: 'rma-gk1', teamId: 'realmadrid', teamName: 'Real Madrid', name: 'Thibaut Courtois', position: 'GK', nationality: 'Belçika', marketValue: '€40M' },
-    { id: 'rma-gk2', teamId: 'realmadrid', teamName: 'Real Madrid', name: 'Andriy Lunin', position: 'GK', nationality: 'Ukrayna', marketValue: '€5M' },
-    { id: 'rma-def1', teamId: 'realmadrid', teamName: 'Real Madrid', name: 'David Alaba', position: 'CB', nationality: 'Avusturya', marketValue: '€45M' },
-    { id: 'rma-def2', teamId: 'realmadrid', teamName: 'Real Madrid', name: 'Éder Militão', position: 'CB', nationality: 'Brezilya', marketValue: '€70M' },
-    { id: 'rma-def3', teamId: 'realmadrid', teamName: 'Real Madrid', name: 'Ferland Mendy', position: 'LB', nationality: 'Fransa', marketValue: '€25M' },
-    { id: 'rma-def4', teamId: 'realmadrid', teamName: 'Real Madrid', name: 'Dani Carvajal', position: 'RB', nationality: 'İspanya', marketValue: '€15M' },
-    { id: 'rma-mid1', teamId: 'realmadrid', teamName: 'Real Madrid', name: 'Casemiro', position: 'CDM', nationality: 'Brezilya', marketValue: '€40M' },
-    { id: 'rma-mid2', teamId: 'realmadrid', teamName: 'Real Madrid', name: 'Luka Modrić', position: 'CM', nationality: 'Hırvatistan', marketValue: '€10M' },
-    { id: 'rma-mid3', teamId: 'realmadrid', teamName: 'Real Madrid', name: 'Toni Kroos', position: 'CM', nationality: 'Almanya', marketValue: '€12M' },
-    { id: 'rma-mid4', teamId: 'realmadrid', teamName: 'Real Madrid', name: 'Fede Valverde', position: 'CM', nationality: 'Uruguay', marketValue: '€90M' },
-    { id: 'rma-att1', teamId: 'realmadrid', teamName: 'Real Madrid', name: 'Karim Benzema', position: 'ST', nationality: 'Fransa', marketValue: '€25M' },
-    { id: 'rma-att2', teamId: 'realmadrid', teamName: 'Real Madrid', name: 'Vinícius Jr.', position: 'LW', nationality: 'Brezilya', marketValue: '€150M' },
-    { id: 'rma-att3', teamId: 'realmadrid', teamName: 'Real Madrid', name: 'Rodrygo', position: 'RW', nationality: 'Brezilya', marketValue: '€80M' },
-    { id: 'rma-att4', teamId: 'realmadrid', teamName: 'Real Madrid', name: 'Marco Asensio', position: 'RW', nationality: 'İspanya', marketValue: '€20M' },
-    { id: 'rma-att5', teamId: 'realmadrid', teamName: 'Real Madrid', name: 'Eden Hazard', position: 'LW', nationality: 'Belçika', marketValue: '€8M' },
-  ],
-  bayern: [
-    { id: 'bay-gk1', teamId: 'bayern', teamName: 'Bayern Munich', name: 'Manuel Neuer', position: 'GK', nationality: 'Almanya', marketValue: '€8M' },
-    { id: 'bay-gk2', teamId: 'bayern', teamName: 'Bayern Munich', name: 'Sven Ulreich', position: 'GK', nationality: 'Almanya', marketValue: '€2M' },
-    { id: 'bay-def1', teamId: 'bayern', teamName: 'Bayern Munich', name: 'Matthijs de Ligt', position: 'CB', nationality: 'Hollanda', marketValue: '€70M' },
-    { id: 'bay-def2', teamId: 'bayern', teamName: 'Bayern Munich', name: 'Dayot Upamecano', position: 'CB', nationality: 'Fransa', marketValue: '€60M' },
-    { id: 'bay-def3', teamId: 'bayern', teamName: 'Bayern Munich', name: 'Alphonso Davies', position: 'LB', nationality: 'Kanada', marketValue: '€70M' },
-    { id: 'bay-def4', teamId: 'bayern', teamName: 'Bayern Munich', name: 'Benjamin Pavard', position: 'RB', nationality: 'Fransa', marketValue: '€30M' },
-    { id: 'bay-mid1', teamId: 'bayern', teamName: 'Bayern Munich', name: 'Joshua Kimmich', position: 'CDM', nationality: 'Almanya', marketValue: '€80M' },
-    { id: 'bay-mid2', teamId: 'bayern', teamName: 'Bayern Munich', name: 'Leon Goretzka', position: 'CM', nationality: 'Almanya', marketValue: '€65M' },
-    { id: 'bay-mid3', teamId: 'bayern', teamName: 'Bayern Munich', name: 'Jamal Musiala', position: 'CAM', nationality: 'Almanya', marketValue: '€110M' },
-    { id: 'bay-mid4', teamId: 'bayern', teamName: 'Bayern Munich', name: 'Thomas Müller', position: 'CAM', nationality: 'Almanya', marketValue: '€8M' },
-    { id: 'bay-att1', teamId: 'bayern', teamName: 'Bayern Munich', name: 'Robert Lewandowski', position: 'ST', nationality: 'Polonya', marketValue: '€30M' },
-    { id: 'bay-att2', teamId: 'bayern', teamName: 'Bayern Munich', name: 'Kingsley Coman', position: 'LW', nationality: 'Fransa', marketValue: '€60M' },
-    { id: 'bay-att3', teamId: 'bayern', teamName: 'Bayern Munich', name: 'Serge Gnabry', position: 'RW', nationality: 'Almanya', marketValue: '€45M' },
-    { id: 'bay-att4', teamId: 'bayern', teamName: 'Bayern Munich', name: 'Leroy Sané', position: 'LW', nationality: 'Almanya', marketValue: '€50M' },
-    { id: 'bay-att5', teamId: 'bayern', teamName: 'Bayern Munich', name: 'Sadio Mané', position: 'ST', nationality: 'Senegal', marketValue: '€25M' },
-  ],
-  besiktas: [
-    { id: 'bjk-gk1', teamId: 'besiktas', teamName: 'Beşiktaş', name: 'Mert Günok', position: 'GK', nationality: 'Türkiye', marketValue: '€3M' },
-    { id: 'bjk-gk2', teamId: 'besiktas', teamName: 'Beşiktaş', name: 'Ersin Destanoğlu', position: 'GK', nationality: 'Türkiye', marketValue: '€2M' },
-    { id: 'bjk-def1', teamId: 'besiktas', teamName: 'Beşiktaş', name: 'Arthur Masuaku', position: 'LB', nationality: 'Kongo', marketValue: '€4M' },
-    { id: 'bjk-def2', teamId: 'besiktas', teamName: 'Beşiktaş', name: 'Welinton', position: 'CB', nationality: 'Brezilya', marketValue: '€5M' },
-    { id: 'bjk-def3', teamId: 'besiktas', teamName: 'Beşiktaş', name: 'Domagoj Vida', position: 'CB', nationality: 'Hırvatistan', marketValue: '€2M' },
-    { id: 'bjk-def4', teamId: 'besiktas', teamName: 'Beşiktaş', name: 'Ridvan Yılmaz', position: 'RB', nationality: 'Türkiye', marketValue: '€8M' },
-    { id: 'bjk-mid1', teamId: 'besiktas', teamName: 'Beşiktaş', name: 'Gedson Fernandes', position: 'CM', nationality: 'Portekiz', marketValue: '€12M' },
-    { id: 'bjk-mid2', teamId: 'besiktas', teamName: 'Beşiktaş', name: 'Salih Uçan', position: 'CM', nationality: 'Türkiye', marketValue: '€4M' },
-    { id: 'bjk-mid3', teamId: 'besiktas', teamName: 'Beşiktaş', name: 'Alex Teixeira', position: 'CAM', nationality: 'Brezilya', marketValue: '€6M' },
-    { id: 'bjk-mid4', teamId: 'besiktas', teamName: 'Beşiktaş', name: 'Atiba Hutchinson', position: 'CDM', nationality: 'Kanada', marketValue: '€1M' },
-    { id: 'bjk-att1', teamId: 'besiktas', teamName: 'Beşiktaş', name: 'Cenk Tosun', position: 'ST', nationality: 'Türkiye', marketValue: '€3M' },
-    { id: 'bjk-att2', teamId: 'besiktas', teamName: 'Beşiktaş', name: 'Vincent Aboubakar', position: 'ST', nationality: 'Kamerun', marketValue: '€8M' },
-    { id: 'bjk-att3', teamId: 'besiktas', teamName: 'Beşiktaş', name: 'Rachid Ghezzal', position: 'RW', nationality: 'Cezayir', marketValue: '€5M' },
-    { id: 'bjk-att4', teamId: 'besiktas', teamName: 'Beşiktaş', name: 'Nkodou', position: 'LW', nationality: 'Fransa', marketValue: '€4M' },
-    { id: 'bjk-att5', teamId: 'besiktas', teamName: 'Beşiktaş', name: 'Larin', position: 'ST', nationality: 'Kanada', marketValue: '€6M' },
-  ],
-  trabzonspor: [
-    { id: 'ts-gk1', teamId: 'trabzonspor', teamName: 'Trabzonspor', name: 'Uğurcan Çakır', position: 'GK', nationality: 'Türkiye', marketValue: '€8M' },
-    { id: 'ts-gk2', teamId: 'trabzonspor', teamName: 'Trabzonspor', name: 'Onurcan Piri', position: 'GK', nationality: 'Türkiye', marketValue: '€1M' },
-    { id: 'ts-def1', teamId: 'trabzonspor', teamName: 'Trabzonspor', name: 'Marc Bartra', position: 'CB', nationality: 'İspanya', marketValue: '€3M' },
-    { id: 'ts-def2', teamId: 'trabzonspor', teamName: 'Trabzonspor', name: 'Stefano Denswil', position: 'CB', nationality: 'Belçika', marketValue: '€2M' },
-    { id: 'ts-def3', teamId: 'trabzonspor', teamName: 'Trabzonspor', name: 'Eren Elmalı', position: 'LB', nationality: 'Türkiye', marketValue: '€4M' },
-    { id: 'ts-def4', teamId: 'trabzonspor', teamName: 'Trabzonspor', name: 'Petros', position: 'RB', nationality: 'Yunanistan', marketValue: '€3M' },
-    { id: 'ts-mid1', teamId: 'trabzonspor', teamName: 'Trabzonspor', name: 'Abdülkadir Ömür', position: 'CM', nationality: 'Türkiye', marketValue: '€6M' },
-    { id: 'ts-mid2', teamId: 'trabzonspor', teamName: 'Trabzonspor', name: 'Manolis Siopis', position: 'CDM', nationality: 'Yunanistan', marketValue: '€4M' },
-    { id: 'ts-mid3', teamId: 'trabzonspor', teamName: 'Trabzonspor', name: 'Edin Višća', position: 'CAM', nationality: 'Bosna-Hersek', marketValue: '€5M' },
-    { id: 'ts-mid4', teamId: 'trabzonspor', teamName: 'Trabzonspor', name: 'Yusuf Sarı', position: 'CM', nationality: 'Türkiye', marketValue: '€3M' },
-    { id: 'ts-att1', teamId: 'trabzonspor', teamName: 'Trabzonspor', name: 'Maxi Gómez', position: 'ST', nationality: 'Uruguay', marketValue: '€8M' },
-    { id: 'ts-att2', teamId: 'trabzonspor', teamName: 'Trabzonspor', name: 'Djaniny', position: 'ST', nationality: 'Yeşil Burun Adaları', marketValue: '€6M' },
-    { id: 'ts-att3', teamId: 'trabzonspor', teamName: 'Trabzonspor', name: 'Anastasios Bakasetas', position: 'CAM', nationality: 'Yunanistan', marketValue: '€4M' },
-    { id: 'ts-att4', teamId: 'trabzonspor', teamName: 'Trabzonspor', name: 'Marek Hamšík', position: 'CM', nationality: 'Slovakya', marketValue: '€2M' },
-    { id: 'ts-att5', teamId: 'trabzonspor', teamName: 'Trabzonspor', name: 'Anthony Nwakaeme', position: 'LW', nationality: 'Nijerya', marketValue: '€5M' },
-  ],
-  arsenal: [
-    { id: 'ars-gk1', teamId: 'arsenal', teamName: 'Arsenal', name: 'Aaron Ramsdale', position: 'GK', nationality: 'İngiltere', marketValue: '€30M' },
-    { id: 'ars-gk2', teamId: 'arsenal', teamName: 'Arsenal', name: 'David Raya', position: 'GK', nationality: 'İspanya', marketValue: '€25M' },
-    { id: 'ars-def1', teamId: 'arsenal', teamName: 'Arsenal', name: 'William Saliba', position: 'CB', nationality: 'Fransa', marketValue: '€50M' },
-    { id: 'ars-def2', teamId: 'arsenal', teamName: 'Arsenal', name: 'Gabriel', position: 'CB', nationality: 'Brezilya', marketValue: '€40M' },
-    { id: 'ars-def3', teamId: 'arsenal', teamName: 'Arsenal', name: 'Oleksandr Zinchenko', position: 'LB', nationality: 'Ukrayna', marketValue: '€35M' },
-    { id: 'ars-def4', teamId: 'arsenal', teamName: 'Arsenal', name: 'Ben White', position: 'RB', nationality: 'İngiltere', marketValue: '€45M' },
-    { id: 'ars-mid1', teamId: 'arsenal', teamName: 'Arsenal', name: 'Declan Rice', position: 'CDM', nationality: 'İngiltere', marketValue: '€100M' },
-    { id: 'ars-mid2', teamId: 'arsenal', teamName: 'Arsenal', name: 'Martin Ødegaard', position: 'CAM', nationality: 'Norveç', marketValue: '€90M' },
-    { id: 'ars-mid3', teamId: 'arsenal', teamName: 'Arsenal', name: 'Kai Havertz', position: 'CM', nationality: 'Almanya', marketValue: '€70M' },
-    { id: 'ars-mid4', teamId: 'arsenal', teamName: 'Arsenal', name: 'Jorginho', position: 'CDM', nationality: 'İtalya', marketValue: '€15M' },
-    { id: 'ars-att1', teamId: 'arsenal', teamName: 'Arsenal', name: 'Gabriel Jesus', position: 'ST', nationality: 'Brezilya', marketValue: '€60M' },
-    { id: 'ars-att2', teamId: 'arsenal', teamName: 'Arsenal', name: 'Bukayo Saka', position: 'RW', nationality: 'İngiltere', marketValue: '€120M' },
-    { id: 'ars-att3', teamId: 'arsenal', teamName: 'Arsenal', name: 'Gabriel Martinelli', position: 'LW', nationality: 'Brezilya', marketValue: '€80M' },
-    { id: 'ars-att4', teamId: 'arsenal', teamName: 'Arsenal', name: 'Eddie Nketiah', position: 'ST', nationality: 'İngiltere', marketValue: '€25M' },
-    { id: 'ars-att5', teamId: 'arsenal', teamName: 'Arsenal', name: 'Leandro Trossard', position: 'LW', nationality: 'Belçika', marketValue: '€30M' },
-  ],
-  liverpool: [
-    { id: 'liv-gk1', teamId: 'liverpool', teamName: 'Liverpool', name: 'Alisson', position: 'GK', nationality: 'Brezilya', marketValue: '€60M' },
-    { id: 'liv-gk2', teamId: 'liverpool', teamName: 'Liverpool', name: 'Caoimhin Kelleher', position: 'GK', nationality: 'İrlanda', marketValue: '€8M' },
-    { id: 'liv-def1', teamId: 'liverpool', teamName: 'Liverpool', name: 'Virgil van Dijk', position: 'CB', nationality: 'Hollanda', marketValue: '€50M' },
-    { id: 'liv-def2', teamId: 'liverpool', teamName: 'Liverpool', name: 'Joël Matip', position: 'CB', nationality: 'Kamerun', marketValue: '€15M' },
-    { id: 'liv-def3', teamId: 'liverpool', teamName: 'Liverpool', name: 'Andy Robertson', position: 'LB', nationality: 'İskoçya', marketValue: '€40M' },
-    { id: 'liv-def4', teamId: 'liverpool', teamName: 'Liverpool', name: 'Trent Alexander-Arnold', position: 'RB', nationality: 'İngiltere', marketValue: '€70M' },
-    { id: 'liv-mid1', teamId: 'liverpool', teamName: 'Liverpool', name: 'Fabinho', position: 'CDM', nationality: 'Brezilya', marketValue: '€50M' },
-    { id: 'liv-mid2', teamId: 'liverpool', teamName: 'Liverpool', name: 'Jordan Henderson', position: 'CM', nationality: 'İngiltere', marketValue: '€20M' },
-    { id: 'liv-mid3', teamId: 'liverpool', teamName: 'Liverpool', name: 'Thiago', position: 'CM', nationality: 'İspanya', marketValue: '€15M' },
-    { id: 'liv-mid4', teamId: 'liverpool', teamName: 'Liverpool', name: 'Curtis Jones', position: 'CM', nationality: 'İngiltere', marketValue: '€25M' },
-    { id: 'liv-att1', teamId: 'liverpool', teamName: 'Liverpool', name: 'Mohamed Salah', position: 'RW', nationality: 'Mısır', marketValue: '€100M' },
-    { id: 'liv-att2', teamId: 'liverpool', teamName: 'Liverpool', name: 'Sadio Mané', position: 'LW', nationality: 'Senegal', marketValue: '€30M' },
-    { id: 'liv-att3', teamId: 'liverpool', teamName: 'Liverpool', name: 'Roberto Firmino', position: 'ST', nationality: 'Brezilya', marketValue: '€25M' },
-    { id: 'liv-att4', teamId: 'liverpool', teamName: 'Liverpool', name: 'Diogo Jota', position: 'LW', nationality: 'Portekiz', marketValue: '€45M' },
-    { id: 'liv-att5', teamId: 'liverpool', teamName: 'Liverpool', name: 'Darwin Núñez', position: 'ST', nationality: 'Uruguay', marketValue: '€70M' },
-  ],
-  basaksehir: [
-    { id: 'bsk-gk1', teamId: 'basaksehir', teamName: 'Başakşehir', name: 'Volkan Babacan', position: 'GK', nationality: 'Türkiye', marketValue: '€2M' },
-    { id: 'bsk-gk2', teamId: 'basaksehir', teamName: 'Başakşehir', name: 'Mert Günok', position: 'GK', nationality: 'Türkiye', marketValue: '€3M' },
-    { id: 'bsk-def1', teamId: 'basaksehir', teamName: 'Başakşehir', name: 'Leo Duarte', position: 'CB', nationality: 'Brezilya', marketValue: '€4M' },
-    { id: 'bsk-def2', teamId: 'basaksehir', teamName: 'Başakşehir', name: 'Lucas Lima', position: 'CB', nationality: 'Brezilya', marketValue: '€3M' },
-    { id: 'bsk-def3', teamId: 'basaksehir', teamName: 'Başakşehir', name: 'Patryk Szysz', position: 'LB', nationality: 'Polonya', marketValue: '€2M' },
-    { id: 'bsk-def4', teamId: 'basaksehir', teamName: 'Başakşehir', name: 'Ömer Ali Şahiner', position: 'RB', nationality: 'Türkiye', marketValue: '€2M' },
-    { id: 'bsk-mid1', teamId: 'basaksehir', teamName: 'Başakşehir', name: 'Mahmut Tekdemir', position: 'CDM', nationality: 'Türkiye', marketValue: '€3M' },
-    { id: 'bsk-mid2', teamId: 'basaksehir', teamName: 'Başakşehir', name: 'Danijel Aleksić', position: 'CM', nationality: 'Sırbistan', marketValue: '€2M' },
-    { id: 'bsk-mid3', teamId: 'basaksehir', teamName: 'Başakşehir', name: 'Berkay Özcan', position: 'CM', nationality: 'Türkiye', marketValue: '€4M' },
-    { id: 'bsk-mid4', teamId: 'basaksehir', teamName: 'Başakşehir', name: 'Deniz Türüç', position: 'CAM', nationality: 'Türkiye', marketValue: '€3M' },
-    { id: 'bsk-att1', teamId: 'basaksehir', teamName: 'Başakşehir', name: 'Stefano Okaka', position: 'ST', nationality: 'İtalya', marketValue: '€2M' },
-    { id: 'bsk-att2', teamId: 'basaksehir', teamName: 'Başakşehir', name: 'Serdar Gürler', position: 'RW', nationality: 'Türkiye', marketValue: '€3M' },
-    { id: 'bsk-att3', teamId: 'basaksehir', teamName: 'Başakşehir', name: 'Edin Višća', position: 'LW', nationality: 'Bosna-Hersek', marketValue: '€4M' },
-    { id: 'bsk-att4', teamId: 'basaksehir', teamName: 'Başakşehir', name: 'Enzo Crivelli', position: 'ST', nationality: 'Fransa', marketValue: '€2M' },
-    { id: 'bsk-att5', teamId: 'basaksehir', teamName: 'Başakşehir', name: 'João Figueiredo', position: 'LW', nationality: 'Portekiz', marketValue: '€1M' },
-  ],
-  alanyaspor: [
-    { id: 'ala-gk1', teamId: 'alanyaspor', teamName: 'Alanyaspor', name: 'Marafona', position: 'GK', nationality: 'Brezilya', marketValue: '€2M' },
-    { id: 'ala-gk2', teamId: 'alanyaspor', teamName: 'Alanyaspor', name: 'Ertuğrul Taşkıran', position: 'GK', nationality: 'Türkiye', marketValue: '€500K' },
-    { id: 'ala-def1', teamId: 'alanyaspor', teamName: 'Alanyaspor', name: 'Baran Moğultay', position: 'LB', nationality: 'Türkiye', marketValue: '€250K' },
-    { id: 'ala-def2', teamId: 'alanyaspor', teamName: 'Alanyaspor', name: 'João Novais', position: 'CB', nationality: 'Portekiz', marketValue: '€1M' },
-    { id: 'ala-def3', teamId: 'alanyaspor', teamName: 'Alanyaspor', name: 'Fatih Aksoy', position: 'CB', nationality: 'Türkiye', marketValue: '€800K' },
-    { id: 'ala-def4', teamId: 'alanyaspor', teamName: 'Alanyaspor', name: 'Leroy Fer', position: 'RB', nationality: 'Hollanda', marketValue: '€1M' },
-    { id: 'ala-mid1', teamId: 'alanyaspor', teamName: 'Alanyaspor', name: 'Efkan Bekiroğlu', position: 'CM', nationality: 'Türkiye', marketValue: '€1M' },
-    { id: 'ala-mid2', teamId: 'alanyaspor', teamName: 'Alanyaspor', name: 'Kharbin', position: 'CDM', nationality: 'Suriye', marketValue: '€800K' },
-    { id: 'ala-mid3', teamId: 'alanyaspor', teamName: 'Alanyaspor', name: 'Pape Diop', position: 'CM', nationality: 'Senegal', marketValue: '€1M' },
-    { id: 'ala-mid4', teamId: 'alanyaspor', teamName: 'Alanyaspor', name: 'Erencan Yardımcı', position: 'CAM', nationality: 'Türkiye', marketValue: '€600K' },
-    { id: 'ala-att1', teamId: 'alanyaspor', teamName: 'Alanyaspor', name: 'Wilson Eduardo', position: 'ST', nationality: 'Portekiz', marketValue: '€1M' },
-    { id: 'ala-att2', teamId: 'alanyaspor', teamName: 'Alanyaspor', name: 'Daniel Candeias', position: 'RW', nationality: 'Portekiz', marketValue: '€800K' },
-    { id: 'ala-att3', teamId: 'alanyaspor', teamName: 'Alanyaspor', name: 'Emre Akbaba', position: 'LW', nationality: 'Türkiye', marketValue: '€1M' },
-    { id: 'ala-att4', teamId: 'alanyaspor', teamName: 'Alanyaspor', name: 'Famara Diedhiou', position: 'ST', nationality: 'Senegal', marketValue: '€1M' },
-    { id: 'ala-att5', teamId: 'alanyaspor', teamName: 'Alanyaspor', name: 'Ahmed Hassan', position: 'LW', nationality: 'Mısır', marketValue: '€600K' },
-  ],
-  antalyaspor: [
-    { id: 'ant-gk1', teamId: 'antalyaspor', teamName: 'Antalyaspor', name: 'Ruud Boffin', position: 'GK', nationality: 'Belçika', marketValue: '€1M' },
-    { id: 'ant-gk2', teamId: 'antalyaspor', teamName: 'Antalyaspor', name: 'Burak Özkayıt', position: 'GK', nationality: 'Türkiye', marketValue: '€500K' },
-    { id: 'ant-def1', teamId: 'antalyaspor', teamName: 'Antalyaspor', name: 'Ömer Toprak', position: 'CB', nationality: 'Türkiye', marketValue: '€2M' },
-    { id: 'ant-def2', teamId: 'antalyaspor', teamName: 'Antalyaspor', name: 'Veysel Sarı', position: 'CB', nationality: 'Türkiye', marketValue: '€1M' },
-    { id: 'ant-def3', teamId: 'antalyaspor', teamName: 'Antalyaspor', name: 'Feddal', position: 'LB', nationality: 'Fas', marketValue: '€1M' },
-    { id: 'ant-def4', teamId: 'antalyaspor', teamName: 'Antalyaspor', name: 'Sinan Gümüş', position: 'RB', nationality: 'Türkiye', marketValue: '€800K' },
-    { id: 'ant-mid1', teamId: 'antalyaspor', teamName: 'Antalyaspor', name: 'Fernando', position: 'CDM', nationality: 'Brezilya', marketValue: '€2M' },
-    { id: 'ant-mid2', teamId: 'antalyaspor', teamName: 'Antalyaspor', name: 'Hakan Özmert', position: 'CM', nationality: 'Türkiye', marketValue: '€800K' },
-    { id: 'ant-mid3', teamId: 'antalyaspor', teamName: 'Antalyaspor', name: 'Sam Larsson', position: 'CAM', nationality: 'İsveç', marketValue: '€1M' },
-    { id: 'ant-mid4', teamId: 'antalyaspor', teamName: 'Antalyaspor', name: 'Gökdeniz Karadeniz', position: 'CM', nationality: 'Türkiye', marketValue: '€500K' },
-    { id: 'ant-att1', teamId: 'antalyaspor', teamName: 'Antalyaspor', name: 'Haji Wright', position: 'ST', nationality: 'ABD', marketValue: '€3M' },
-    { id: 'ant-att2', teamId: 'antalyaspor', teamName: 'Antalyaspor', name: 'Adriano', position: 'ST', nationality: 'Brezilya', marketValue: '€1M' },
-    { id: 'ant-att3', teamId: 'antalyaspor', teamName: 'Antalyaspor', name: 'Luan', position: 'LW', nationality: 'Brezilya', marketValue: '€1M' },
-    { id: 'ant-att4', teamId: 'antalyaspor', teamName: 'Antalyaspor', name: 'Bünyamin Balat', position: 'RW', nationality: 'Türkiye', marketValue: '€600K' },
-    { id: 'ant-att5', teamId: 'antalyaspor', teamName: 'Antalyaspor', name: 'Ersin Zehir', position: 'ST', nationality: 'Türkiye', marketValue: '€400K' },
-  ],
-  sivasspor: [
-    { id: 'siv-gk1', teamId: 'sivasspor', teamName: 'Sivasspor', name: 'Ali Şaşal Vural', position: 'GK', nationality: 'Türkiye', marketValue: '€1M' },
-    { id: 'siv-gk2', teamId: 'sivasspor', teamName: 'Sivasspor', name: 'Muammer Yıldırım', position: 'GK', nationality: 'Türkiye', marketValue: '€500K' },
-    { id: 'siv-def1', teamId: 'sivasspor', teamName: 'Sivasspor', name: 'Aaron Appindangoyé', position: 'CB', nationality: 'Gabon', marketValue: '€1M' },
-    { id: 'siv-def2', teamId: 'sivasspor', teamName: 'Sivasspor', name: 'Caner Osmanpaşa', position: 'CB', nationality: 'Türkiye', marketValue: '€800K' },
-    { id: 'siv-def3', teamId: 'sivasspor', teamName: 'Sivasspor', name: 'Ziya Erdal', position: 'LB', nationality: 'Türkiye', marketValue: '€600K' },
-    { id: 'siv-def4', teamId: 'sivasspor', teamName: 'Sivasspor', name: 'Murat Paluli', position: 'RB', nationality: 'Türkiye', marketValue: '€500K' },
-    { id: 'siv-mid1', teamId: 'sivasspor', teamName: 'Sivasspor', name: 'Robin Yalçın', position: 'CDM', nationality: 'Türkiye', marketValue: '€1M' },
-    { id: 'siv-mid2', teamId: 'sivasspor', teamName: 'Sivasspor', name: 'Isaac Cofie', position: 'CM', nationality: 'Gana', marketValue: '€800K' },
-    { id: 'siv-mid3', teamId: 'sivasspor', teamName: 'Sivasspor', name: 'Max Gradel', position: 'CAM', nationality: 'Fildişi Sahili', marketValue: '€1M' },
-    { id: 'siv-mid4', teamId: 'sivasspor', teamName: 'Sivasspor', name: 'Hakan Arslan', position: 'CM', nationality: 'Türkiye', marketValue: '€600K' },
-    { id: 'siv-att1', teamId: 'sivasspor', teamName: 'Sivasspor', name: 'Mustapha Yatabaré', position: 'ST', nationality: 'Mali', marketValue: '€1M' },
-    { id: 'siv-att2', teamId: 'sivasspor', teamName: 'Sivasspor', name: 'Erdoğan Yeşilyurt', position: 'ST', nationality: 'Türkiye', marketValue: '€800K' },
-    { id: 'siv-att3', teamId: 'sivasspor', teamName: 'Sivasspor', name: 'Arouna Koné', position: 'LW', nationality: 'Fildişi Sahili', marketValue: '€600K' },
-    { id: 'siv-att4', teamId: 'sivasspor', teamName: 'Sivasspor', name: 'Diafra Sakho', position: 'RW', nationality: 'Senegal', marketValue: '€800K' },
-    { id: 'siv-att5', teamId: 'sivasspor', teamName: 'Sivasspor', name: 'Emre Kılınç', position: 'ST', nationality: 'Türkiye', marketValue: '€600K' },
-  ],
-  konyaspor: [
-    { id: 'kon-gk1', teamId: 'konyaspor', teamName: 'Konyaspor', name: 'İbrahim Şen', position: 'GK', nationality: 'Türkiye', marketValue: '€1M' },
-    { id: 'kon-gk2', teamId: 'konyaspor', teamName: 'Konyaspor', name: 'Erhan Erentürk', position: 'GK', nationality: 'Türkiye', marketValue: '€500K' },
-    { id: 'kon-def1', teamId: 'konyaspor', teamName: 'Konyaspor', name: 'Adil Demirbağ', position: 'CB', nationality: 'Türkiye', marketValue: '€800K' },
-    { id: 'kon-def2', teamId: 'konyaspor', teamName: 'Konyaspor', name: 'Francisco Calvo', position: 'CB', nationality: 'Kosta Rika', marketValue: '€1M' },
-    { id: 'kon-def3', teamId: 'konyaspor', teamName: 'Konyaspor', name: 'Ahmet Oğuz', position: 'LB', nationality: 'Türkiye', marketValue: '€600K' },
-    { id: 'kon-def4', teamId: 'konyaspor', teamName: 'Konyaspor', name: 'Endri Çekiçi', position: 'RB', nationality: 'Türkiye', marketValue: '€500K' },
-    { id: 'kon-mid1', teamId: 'konyaspor', teamName: 'Konyaspor', name: 'Soner Dikmen', position: 'CDM', nationality: 'Türkiye', marketValue: '€800K' },
-    { id: 'kon-mid2', teamId: 'konyaspor', teamName: 'Konyaspor', name: 'Bruno Paz', position: 'CM', nationality: 'Portekiz', marketValue: '€600K' },
-    { id: 'kon-mid3', teamId: 'konyaspor', teamName: 'Konyaspor', name: 'Amilton', position: 'CAM', nationality: 'Brezilya', marketValue: '€800K' },
-    { id: 'kon-mid4', teamId: 'konyaspor', teamName: 'Konyaspor', name: 'Muhammet Demir', position: 'CM', nationality: 'Türkiye', marketValue: '€500K' },
-    { id: 'kon-att1', teamId: 'konyaspor', teamName: 'Konyaspor', name: 'Sokol Cikalleshi', position: 'ST', nationality: 'Arnavutluk', marketValue: '€1M' },
-    { id: 'kon-att2', teamId: 'konyaspor', teamName: 'Konyaspor', name: 'Endri Çekiçi', position: 'ST', nationality: 'Türkiye', marketValue: '€600K' },
-    { id: 'kon-att3', teamId: 'konyaspor', teamName: 'Konyaspor', name: 'Konrad Michalak', position: 'LW', nationality: 'Polonya', marketValue: '€800K' },
-    { id: 'kon-att4', teamId: 'konyaspor', teamName: 'Konyaspor', name: 'Uğurcan Yazğılı', position: 'RW', nationality: 'Türkiye', marketValue: '€500K' },
-    { id: 'kon-att5', teamId: 'konyaspor', teamName: 'Konyaspor', name: 'Mame Thiam', position: 'ST', nationality: 'Senegal', marketValue: '€600K' },
-  ],
-  adana: [
-    { id: 'ads-gk1', teamId: 'adana', teamName: 'Adana Demirspor', name: 'Vladimir Stojković', position: 'GK', nationality: 'Sırbistan', marketValue: '€1M' },
-    { id: 'ads-gk2', teamId: 'adana', teamName: 'Adana Demirspor', name: 'Gökhan Akkan', position: 'GK', nationality: 'Türkiye', marketValue: '€500K' },
-    { id: 'ads-def1', teamId: 'adana', teamName: 'Adana Demirspor', name: 'Samet Akaydın', position: 'CB', nationality: 'Türkiye', marketValue: '€1M' },
-    { id: 'ads-def2', teamId: 'adana', teamName: 'Adana Demirspor', name: 'Jovan Manev', position: 'CB', nationality: 'Makedonya', marketValue: '€800K' },
-    { id: 'ads-def3', teamId: 'adana', teamName: 'Adana Demirspor', name: 'Abdurrahim Dursun', position: 'LB', nationality: 'Türkiye', marketValue: '€600K' },
-    { id: 'ads-def4', teamId: 'adana', teamName: 'Adana Demirspor', name: 'Kévin Rodrigues', position: 'RB', nationality: 'Portekiz', marketValue: '€800K' },
-    { id: 'ads-mid1', teamId: 'adana', teamName: 'Adana Demirspor', name: 'Younès Belhanda', position: 'CDM', nationality: 'Fas', marketValue: '€1M' },
-    { id: 'ads-mid2', teamId: 'adana', teamName: 'Adana Demirspor', name: 'Badou Ndiaye', position: 'CM', nationality: 'Senegal', marketValue: '€1M' },
-    { id: 'ads-mid3', teamId: 'adana', teamName: 'Adana Demirspor', name: 'Emre Akbaba', position: 'CAM', nationality: 'Türkiye', marketValue: '€1M' },
-    { id: 'ads-mid4', teamId: 'adana', teamName: 'Adana Demirspor', name: 'Yusuf Sarı', position: 'CM', nationality: 'Türkiye', marketValue: '€800K' },
-    { id: 'ads-att1', teamId: 'adana', teamName: 'Adana Demirspor', name: 'Mario Balotelli', position: 'ST', nationality: 'İtalya', marketValue: '€2M' },
-    { id: 'ads-att2', teamId: 'adana', teamName: 'Adana Demirspor', name: 'David Akintola', position: 'ST', nationality: 'Nijerya', marketValue: '€800K' },
-    { id: 'ads-att3', teamId: 'adana', teamName: 'Adana Demirspor', name: 'Henry Onyekuru', position: 'LW', nationality: 'Nijerya', marketValue: '€1M' },
-    { id: 'ads-att4', teamId: 'adana', teamName: 'Adana Demirspor', name: 'Benjamin Stambouli', position: 'RW', nationality: 'Fransa', marketValue: '€600K' },
-    { id: 'ads-att5', teamId: 'adana', teamName: 'Adana Demirspor', name: 'Britt Assombalonga', position: 'ST', nationality: 'Kongo', marketValue: '€800K' },
-  ],
-  kasimpasa: [
-    { id: 'kas-gk1', teamId: 'kasimpasa', teamName: 'Kasımpaşa', name: 'Ramazan Köse', position: 'GK', nationality: 'Türkiye', marketValue: '€800K' },
-    { id: 'kas-gk2', teamId: 'kasimpasa', teamName: 'Kasımpaşa', name: 'Ertuğrul Taşkıran', position: 'GK', nationality: 'Türkiye', marketValue: '€500K' },
-    { id: 'kas-def1', teamId: 'kasimpasa', teamName: 'Kasımpaşa', name: 'Tunçay Kılıç', position: 'CB', nationality: 'Türkiye', marketValue: '€600K' },
-    { id: 'kas-def2', teamId: 'kasimpasa', teamName: 'Kasımpaşa', name: 'Ryan Donk', position: 'CB', nationality: 'Hollanda', marketValue: '€800K' },
-    { id: 'kas-def3', teamId: 'kasimpasa', teamName: 'Kasımpaşa', name: 'Berat Özdemir', position: 'LB', nationality: 'Türkiye', marketValue: '€500K' },
-    { id: 'kas-def4', teamId: 'kasimpasa', teamName: 'Kasımpaşa', name: 'Mamadou Fall', position: 'RB', nationality: 'Senegal', marketValue: '€600K' },
-    { id: 'kas-mid1', teamId: 'kasimpasa', teamName: 'Kasımpaşa', name: 'Haris Hajradinović', position: 'CDM', nationality: 'Bosna-Hersek', marketValue: '€800K' },
-    { id: 'kas-mid2', teamId: 'kasimpasa', teamName: 'Kasımpaşa', name: 'Aytaç Kara', position: 'CM', nationality: 'Türkiye', marketValue: '€600K' },
-    { id: 'kas-mid3', teamId: 'kasimpasa', teamName: 'Kasımpaşa', name: 'Mortadha Ben Ouannes', position: 'CAM', nationality: 'Tunus', marketValue: '€600K' },
-    { id: 'kas-mid4', teamId: 'kasimpasa', teamName: 'Kasımpaşa', name: 'İlhan Depe', position: 'CM', nationality: 'Türkiye', marketValue: '€500K' },
-    { id: 'kas-att1', teamId: 'kasimpasa', teamName: 'Kasımpaşa', name: 'Mamadou Fall', position: 'ST', nationality: 'Senegal', marketValue: '€800K' },
-    { id: 'kas-att2', teamId: 'kasimpasa', teamName: 'Kasımpaşa', name: 'Valentin Eysseric', position: 'ST', nationality: 'Fransa', marketValue: '€600K' },
-    { id: 'kas-att3', teamId: 'kasimpasa', teamName: 'Kasımpaşa', name: 'Julian Jeanvier', position: 'LW', nationality: 'Fransa', marketValue: '€500K' },
-    { id: 'kas-att4', teamId: 'kasimpasa', teamName: 'Kasımpaşa', name: 'Erdem Çetinkaya', position: 'RW', nationality: 'Türkiye', marketValue: '€400K' },
-    { id: 'kas-att5', teamId: 'kasimpasa', teamName: 'Kasımpaşa', name: 'Berkay Aydoğmuş', position: 'ST', nationality: 'Türkiye', marketValue: '€300K' },
-  ],
-  gaziantep: [
-    { id: 'gzt-gk1', teamId: 'gaziantep', teamName: 'Gaziantep FK', name: 'Günay Güvenç', position: 'GK', nationality: 'Türkiye', marketValue: '€1M' },
-    { id: 'gzt-gk2', teamId: 'gaziantep', teamName: 'Gaziantep FK', name: 'Mustafa Burak Bozan', position: 'GK', nationality: 'Türkiye', marketValue: '€500K' },
-    { id: 'gzt-def1', teamId: 'gaziantep', teamName: 'Gaziantep FK', name: 'Papy Djilobodji', position: 'CB', nationality: 'Senegal', marketValue: '€800K' },
-    { id: 'gzt-def2', teamId: 'gaziantep', teamName: 'Gaziantep FK', name: 'Alin Toșca', position: 'CB', nationality: 'Romanya', marketValue: '€600K' },
-    { id: 'gzt-def3', teamId: 'gaziantep', teamName: 'Gaziantep FK', name: 'Jean-Armel Kana-Biyik', position: 'LB', nationality: 'Kamerun', marketValue: '€500K' },
-    { id: 'gzt-def4', teamId: 'gaziantep', teamName: 'Gaziantep FK', name: 'Oğuz Ceylan', position: 'RB', nationality: 'Türkiye', marketValue: '€400K' },
-    { id: 'gzt-mid1', teamId: 'gaziantep', teamName: 'Gaziantep FK', name: 'Soufiane Feghouli', position: 'CDM', nationality: 'Cezayir', marketValue: '€1M' },
-    { id: 'gzt-mid2', teamId: 'gaziantep', teamName: 'Gaziantep FK', name: 'Jefferson', position: 'CM', nationality: 'Brezilya', marketValue: '€600K' },
-    { id: 'gzt-mid3', teamId: 'gaziantep', teamName: 'Gaziantep FK', name: 'Marko Jevtović', position: 'CAM', nationality: 'Sırbistan', marketValue: '€600K' },
-    { id: 'gzt-mid4', teamId: 'gaziantep', teamName: 'Gaziantep FK', name: 'Kenan Özer', position: 'CM', nationality: 'Türkiye', marketValue: '€400K' },
-    { id: 'gzt-att1', teamId: 'gaziantep', teamName: 'Gaziantep FK', name: 'Mirza Cihan', position: 'ST', nationality: 'Türkiye', marketValue: '€600K' },
-    { id: 'gzt-att2', teamId: 'gaziantep', teamName: 'Gaziantep FK', name: 'João Figueiredo', position: 'ST', nationality: 'Portekiz', marketValue: '€500K' },
-    { id: 'gzt-att3', teamId: 'gaziantep', teamName: 'Gaziantep FK', name: 'Alexandru Maxim', position: 'LW', nationality: 'Romanya', marketValue: '€600K' },
-    { id: 'gzt-att4', teamId: 'gaziantep', teamName: 'Gaziantep FK', name: 'Denis Drăguș', position: 'RW', nationality: 'Romanya', marketValue: '€800K' },
-    { id: 'gzt-att5', teamId: 'gaziantep', teamName: 'Gaziantep FK', name: 'Mustafa Eskihellaç', position: 'ST', nationality: 'Türkiye', marketValue: '€300K' },
-  ],
+const createPlayer = (
+  id: string,
+  name: string,
+  position: string,
+  age: number,
+  nationality: string[],
+  currentClub: string,
+  height: number,
+  foot: string,
+  marketValue: number
+): Player => {
+  const joinedYearsAgo = Math.floor(Math.random() * 5) + 1;
+  return {
+    id,
+    name,
+    position,
+    dateOfBirth: getBirthDate(age),
+    age,
+    nationality,
+    currentClub,
+    height,
+    foot,
+    joinedOn: getJoinedDate(joinedYearsAgo),
+    joined: `${joinedYearsAgo} years ago`,
+    signedFrom: ["Free Transfer", "Transfer", "Youth Academy"][Math.floor(Math.random() * 3)],
+    contract: getContractDate(Math.floor(Math.random() * 3) + 1),
+    marketValue,
+    status: "Available"
+  };
 };
+
+export const mockPlayers: ClubPlayersResponse[] = [
+  // Fenerbahçe
+  {
+    updatedAt: getISOString(),
+    id: "fenerbahce",
+    players: [
+      createPlayer("fb-1", "Dominik Livaković", "GK", 29, ["Hırvatistan"], "Fenerbahçe", 188, "right", 8000000),
+      createPlayer("fb-2", "İrfan Egribayat", "GK", 24, ["Türkiye"], "Fenerbahçe", 185, "right", 1500000),
+      createPlayer("fb-3", "Ferdi Kadıoğlu", "LB", 24, ["Türkiye"], "Fenerbahçe", 175, "left", 15000000),
+      createPlayer("fb-4", "Attila Szalai", "CB", 26, ["Macaristan"], "Fenerbahçe", 190, "left", 12000000),
+      createPlayer("fb-5", "Serdar Aziz", "CB", 34, ["Türkiye"], "Fenerbahçe", 186, "right", 3000000),
+      createPlayer("fb-6", "Osayi-Samuel", "RB", 26, ["Nijerya"], "Fenerbahçe", 178, "right", 5000000),
+      createPlayer("fb-7", "İsmail Yüksek", "CM", 25, ["Türkiye"], "Fenerbahçe", 182, "right", 8000000),
+      createPlayer("fb-8", "Fred", "CM", 31, ["Brezilya"], "Fenerbahçe", 169, "right", 20000000),
+      createPlayer("fb-9", "Sebastian Szymański", "CAM", 25, ["Polonya"], "Fenerbahçe", 174, "left", 10000000),
+      createPlayer("fb-10", "İrfan Can Kahveci", "CM", 29, ["Türkiye"], "Fenerbahçe", 175, "right", 6000000),
+      createPlayer("fb-11", "Edin Džeko", "ST", 38, ["Bosna-Hersek"], "Fenerbahçe", 193, "right", 2000000),
+      createPlayer("fb-12", "Ryan Kent", "LW", 27, ["İngiltere"], "Fenerbahçe", 176, "right", 3000000),
+      createPlayer("fb-13", "Cengiz Ünder", "RW", 26, ["Türkiye"], "Fenerbahçe", 173, "left", 12000000),
+      createPlayer("fb-14", "Dusan Tadic", "AM", 36, ["Sırbistan"], "Fenerbahçe", 181, "right", 6000000),
+      createPlayer("fb-15", "Mert Müldür", "RB", 25, ["Türkiye"], "Fenerbahçe", 180, "right", 4000000),
+      createPlayer("fb-16", "Jayden Oosterwolde", "CB", 23, ["Hollanda"], "Fenerbahçe", 188, "left", 2500000),
+      createPlayer("fb-17", "Mert Hakan Yandaş", "CM", 29, ["Türkiye"], "Fenerbahçe", 178, "right", 3500000),
+      createPlayer("fb-18", "Michy Batshuayi", "ST", 30, ["Belçika"], "Fenerbahçe", 185, "right", 8000000),
+      createPlayer("fb-19", "Zeki Çelik", "RB", 27, ["Türkiye"], "Fenerbahçe", 175, "right", 5000000),
+      createPlayer("fb-20", "Rıdvan Yılmaz", "LB", 23, ["Türkiye"], "Fenerbahçe", 173, "left", 6000000)
+    ]
+  },
+  // Galatasaray
+  {
+    updatedAt: getISOString(),
+    id: "galatasaray",
+    players: [
+      createPlayer("gs-1", "Fernando Muslera", "GK", 37, ["Uruguay"], "Galatasaray", 190, "right", 3000000),
+      createPlayer("gs-2", "Jankat Yılmaz", "GK", 23, ["Türkiye"], "Galatasaray", 188, "right", 1000000),
+      createPlayer("gs-3", "Abdülkerim Bardakcı", "CB", 29, ["Türkiye"], "Galatasaray", 185, "left", 5000000),
+      createPlayer("gs-4", "Davinson Sánchez", "CB", 28, ["Kolombiya"], "Galatasaray", 187, "right", 15000000),
+      createPlayer("gs-5", "Angeliño", "LB", 27, ["İspanya"], "Galatasaray", 175, "left", 8000000),
+      createPlayer("gs-6", "Sacha Boey", "RB", 23, ["Fransa"], "Galatasaray", 178, "right", 12000000),
+      createPlayer("gs-7", "Lucas Torreira", "CDM", 28, ["Uruguay"], "Galatasaray", 168, "right", 18000000),
+      createPlayer("gs-8", "Kerem Demirbay", "CM", 31, ["Türkiye"], "Galatasaray", 182, "left", 6000000),
+      createPlayer("gs-9", "Dries Mertens", "CAM", 37, ["Belçika"], "Galatasaray", 169, "right", 4000000),
+      createPlayer("gs-10", "Yunus Akgün", "RW", 24, ["Türkiye"], "Galatasaray", 174, "left", 8000000),
+      createPlayer("gs-11", "Mauro Icardi", "ST", 31, ["Arjantin"], "Galatasaray", 181, "right", 25000000),
+      createPlayer("gs-12", "Hakim Ziyech", "RW", 31, ["Fas"], "Galatasaray", 180, "left", 15000000),
+      createPlayer("gs-13", "Tete", "RW", 24, ["Brezilya"], "Galatasaray", 173, "right", 10000000),
+      createPlayer("gs-14", "Wilfried Zaha", "LW", 31, ["Fildişi Sahili"], "Galatasaray", 180, "right", 12000000),
+      createPlayer("gs-15", "Victor Nelsson", "CB", 26, ["Danimarka"], "Galatasaray", 189, "right", 10000000),
+      createPlayer("gs-16", "Barış Alıcı", "RB", 26, ["Türkiye"], "Galatasaray", 178, "right", 3000000),
+      createPlayer("gs-17", "Kazımcan Karataş", "LB", 21, ["Türkiye"], "Galatasaray", 176, "left", 4000000),
+      createPlayer("gs-18", "Lucas Torreira", "CDM", 28, ["Uruguay"], "Galatasaray", 168, "right", 18000000),
+      createPlayer("gs-19", "Halil Dervişoğlu", "ST", 25, ["Türkiye"], "Galatasaray", 185, "right", 5000000),
+      createPlayer("gs-20", "Gedson Fernandes", "CM", 25, ["Portekiz"], "Galatasaray", 182, "right", 8000000)
+    ]
+  },
+  // Beşiktaş
+  {
+    updatedAt: getISOString(),
+    id: "besiktas",
+    players: [
+      createPlayer("bjk-1", "Mert Günok", "GK", 35, ["Türkiye"], "Beşiktaş", 191, "right", 3000000),
+      createPlayer("bjk-2", "Ersin Destanoğlu", "GK", 23, ["Türkiye"], "Beşiktaş", 188, "right", 2000000),
+      createPlayer("bjk-3", "Arthur Masuaku", "LB", 30, ["Kongo"], "Beşiktaş", 178, "left", 4000000),
+      createPlayer("bjk-4", "Welinton", "CB", 31, ["Brezilya"], "Beşiktaş", 188, "right", 5000000),
+      createPlayer("bjk-5", "Domagoj Vida", "CB", 35, ["Hırvatistan"], "Beşiktaş", 184, "right", 2000000),
+      createPlayer("bjk-6", "Ridvan Yılmaz", "RB", 23, ["Türkiye"], "Beşiktaş", 175, "left", 8000000),
+      createPlayer("bjk-7", "Gedson Fernandes", "CM", 25, ["Portekiz"], "Beşiktaş", 182, "right", 12000000),
+      createPlayer("bjk-8", "Salih Uçan", "CM", 30, ["Türkiye"], "Beşiktaş", 178, "right", 4000000),
+      createPlayer("bjk-9", "Alex Teixeira", "CAM", 34, ["Brezilya"], "Beşiktaş", 173, "right", 6000000),
+      createPlayer("bjk-10", "Cenk Tosun", "ST", 33, ["Türkiye"], "Beşiktaş", 186, "right", 3000000),
+      createPlayer("bjk-11", "Vincent Aboubakar", "ST", 32, ["Kamerun"], "Beşiktaş", 184, "right", 8000000),
+      createPlayer("bjk-12", "Al-Musrati", "CDM", 28, ["Libya"], "Beşiktaş", 186, "right", 10000000),
+      createPlayer("bjk-13", "Antonio Silva", "CB", 21, ["Portekiz"], "Beşiktaş", 190, "right", 15000000),
+      createPlayer("bjk-14", "Rafa Silva", "AM", 31, ["Portekiz"], "Beşiktaş", 175, "right", 12000000),
+      createPlayer("bjk-15", "Amir Hadžiahmetović", "CM", 27, ["Bosna-Hersek"], "Beşiktaş", 182, "right", 6000000),
+      createPlayer("bjk-16", "Jean Onana", "CM", 25, ["Kamerun"], "Beşiktaş", 185, "right", 7000000),
+      createPlayer("bjk-17", "Sergen Yalçın", "LW", 27, ["Türkiye"], "Beşiktaş", 176, "right", 4000000),
+      createPlayer("bjk-18", "Mert Günok", "GK", 35, ["Türkiye"], "Beşiktaş", 191, "right", 3000000),
+      createPlayer("bjk-19", "Eric Bailly", "CB", 30, ["Fildişi Sahili"], "Beşiktaş", 187, "right", 5000000),
+      createPlayer("bjk-20", "Jackson Muleka", "ST", 25, ["Kongo"], "Beşiktaş", 182, "right", 6000000)
+    ]
+  },
+  // Trabzonspor
+  {
+    updatedAt: getISOString(),
+    id: "trabzonspor",
+    players: [
+      createPlayer("ts-1", "Uğurcan Çakır", "GK", 28, ["Türkiye"], "Trabzonspor", 191, "right", 8000000),
+      createPlayer("ts-2", "Onurcan Piri", "GK", 25, ["Türkiye"], "Trabzonspor", 185, "right", 1000000),
+      createPlayer("ts-3", "Marc Bartra", "CB", 33, ["İspanya"], "Trabzonspor", 184, "right", 3000000),
+      createPlayer("ts-4", "Stefano Denswil", "CB", 31, ["Belçika"], "Trabzonspor", 186, "left", 2000000),
+      createPlayer("ts-5", "Eren Elmalı", "LB", 26, ["Türkiye"], "Trabzonspor", 177, "left", 4000000),
+      createPlayer("ts-6", "Petros", "RB", 29, ["Yunanistan"], "Trabzonspor", 179, "right", 3000000),
+      createPlayer("ts-7", "Abdülkadir Ömür", "CM", 25, ["Türkiye"], "Trabzonspor", 173, "right", 6000000),
+      createPlayer("ts-8", "Manolis Siopis", "CDM", 30, ["Yunanistan"], "Trabzonspor", 175, "right", 4000000),
+      createPlayer("ts-9", "Edin Višća", "CAM", 34, ["Bosna-Hersek"], "Trabzonspor", 172, "left", 5000000),
+      createPlayer("ts-10", "Maxi Gómez", "ST", 27, ["Uruguay"], "Trabzonspor", 186, "right", 8000000),
+      createPlayer("ts-11", "Anastasios Bakasetas", "CAM", 31, ["Yunanistan"], "Trabzonspor", 181, "right", 4000000),
+      createPlayer("ts-12", "Enis Destan", "ST", 22, ["Türkiye"], "Trabzonspor", 185, "right", 5000000),
+      createPlayer("ts-13", "Umut Bozok", "ST", 28, ["Türkiye"], "Trabzonspor", 183, "right", 3500000),
+      createPlayer("ts-14", "Mislav Oršić", "LW", 31, ["Hırvatistan"], "Trabzonspor", 178, "right", 6000000),
+      createPlayer("ts-15", "Trezeguet", "RW", 29, ["Mısır"], "Trabzonspor", 175, "right", 8000000),
+      createPlayer("ts-16", "Onur Bulut", "RB", 29, ["Türkiye"], "Trabzonspor", 179, "right", 3000000),
+      createPlayer("ts-17", "Eren Elmalı", "LB", 26, ["Türkiye"], "Trabzonspor", 177, "left", 4000000),
+      createPlayer("ts-18", "Banou Diawara", "CM", 28, ["Mali"], "Trabzonspor", 182, "right", 3500000),
+      createPlayer("ts-19", "Berat Özdemir", "CDM", 25, ["Türkiye"], "Trabzonspor", 184, "right", 4000000),
+      createPlayer("ts-20", "Uğurcan Çakır", "GK", 28, ["Türkiye"], "Trabzonspor", 191, "right", 8000000)
+    ]
+  },
+  // Başakşehir
+  {
+    updatedAt: getISOString(),
+    id: "basaksehir",
+    players: [
+      createPlayer("bsk-1", "Volkan Babacan", "GK", 35, ["Türkiye"], "Başakşehir", 192, "right", 2000000),
+      createPlayer("bsk-2", "Leo Duarte", "CB", 28, ["Brezilya"], "Başakşehir", 186, "right", 4000000),
+      createPlayer("bsk-3", "Lucas Lima", "CB", 30, ["Brezilya"], "Başakşehir", 185, "left", 3000000),
+      createPlayer("bsk-4", "Mahmut Tekdemir", "CDM", 34, ["Türkiye"], "Başakşehir", 178, "right", 3000000),
+      createPlayer("bsk-5", "Berkay Özcan", "CM", 27, ["Türkiye"], "Başakşehir", 175, "right", 4000000),
+      createPlayer("bsk-6", "Deniz Türüç", "CAM", 31, ["Türkiye"], "Başakşehir", 177, "left", 3000000),
+      createPlayer("bsk-7", "Stefano Okaka", "ST", 35, ["İtalya"], "Başakşehir", 186, "right", 2000000),
+      createPlayer("bsk-8", "Serdar Gürler", "RW", 33, ["Türkiye"], "Başakşehir", 178, "right", 3000000),
+      createPlayer("bsk-9", "Okan Kocuk", "GK", 29, ["Türkiye"], "Başakşehir", 192, "right", 2500000),
+      createPlayer("bsk-10", "Emre Belözoğlu", "CM", 44, ["Türkiye"], "Başakşehir", 178, "right", 2000000),
+      createPlayer("bsk-11", "Edin Visca", "RW", 34, ["Bosna-Hersek"], "Başakşehir", 172, "left", 5000000),
+      createPlayer("bsk-12", "İrfan Can Eğribayat", "GK", 24, ["Türkiye"], "Başakşehir", 185, "right", 1500000),
+      createPlayer("bsk-13", "Enzo Crivelli", "ST", 29, ["Fransa"], "Başakşehir", 188, "right", 4000000),
+      createPlayer("bsk-14", "Youssouf Ndayishimiye", "CDM", 25, ["Burundi"], "Başakşehir", 183, "right", 3500000),
+      createPlayer("bsk-15", "Lucas Biglia", "CM", 38, ["Arjantin"], "Başakşehir", 182, "right", 2000000),
+      createPlayer("bsk-16", "Onur Ergun", "LB", 28, ["Türkiye"], "Başakşehir", 176, "left", 2500000),
+      createPlayer("bsk-17", "Ömer Ali Şahiner", "RB", 27, ["Türkiye"], "Başakşehir", 179, "right", 2000000)
+    ]
+  },
+  // Alanyaspor
+  {
+    updatedAt: getISOString(),
+    id: "alanyaspor",
+    players: [
+      createPlayer("ala-1", "Marafona", "GK", 35, ["Brezilya"], "Alanyaspor", 190, "right", 2000000),
+      createPlayer("ala-2", "Baran Moğultay", "LB", 24, ["Türkiye"], "Alanyaspor", 178, "left", 500000),
+      createPlayer("ala-3", "João Novais", "CB", 30, ["Portekiz"], "Alanyaspor", 183, "left", 1000000),
+      createPlayer("ala-4", "Fatih Aksoy", "CB", 27, ["Türkiye"], "Alanyaspor", 186, "right", 800000),
+      createPlayer("ala-5", "Efkan Bekiroğlu", "CM", 29, ["Türkiye"], "Alanyaspor", 180, "right", 1000000),
+      createPlayer("ala-6", "Kharbin", "CDM", 28, ["Suriye"], "Alanyaspor", 175, "right", 800000),
+      createPlayer("ala-7", "Pape Diop", "CM", 26, ["Senegal"], "Alanyaspor", 182, "right", 1000000),
+      createPlayer("ala-8", "Wilson Eduardo", "ST", 34, ["Portekiz"], "Alanyaspor", 185, "right", 1000000),
+      createPlayer("ala-9", "Daniel Candeias", "RW", 36, ["Portekiz"], "Alanyaspor", 175, "right", 800000),
+      createPlayer("ala-10", "Emre Akbaba", "LW", 32, ["Türkiye"], "Alanyaspor", 178, "left", 1000000),
+      createPlayer("ala-11", "Ahmet Gülay", "RB", 25, ["Türkiye"], "Alanyaspor", 179, "right", 600000),
+      createPlayer("ala-12", "Leroy Fer", "CM", 34, ["Hollanda"], "Alanyaspor", 188, "right", 1500000),
+      createPlayer("ala-13", "Ousmane Coulibaly", "CB", 32, ["Mali"], "Alanyaspor", 190, "right", 1200000),
+      createPlayer("ala-14", "Lucas Beraldo", "LB", 26, ["Brezilya"], "Alanyaspor", 182, "left", 2000000),
+      createPlayer("ala-15", "Ahmed Hassan", "CAM", 28, ["Mısır"], "Alanyaspor", 175, "right", 1500000)
+    ]
+  },
+  // Sivasspor
+  {
+    updatedAt: getISOString(),
+    id: "sivasspor",
+    players: [
+      createPlayer("siv-1", "Ali Şaşal Vural", "GK", 30, ["Türkiye"], "Sivasspor", 189, "right", 2000000),
+      createPlayer("siv-2", "Muammer Yıldırım", "GK", 26, ["Türkiye"], "Sivasspor", 186, "right", 800000),
+      createPlayer("siv-3", "Caner Osmanpaşa", "CB", 32, ["Türkiye"], "Sivasspor", 188, "right", 3000000),
+      createPlayer("siv-4", "Dimitris Goutas", "CB", 29, ["Yunanistan"], "Sivasspor", 190, "right", 2500000),
+      createPlayer("siv-5", "Ziya Erdal", "LB", 27, ["Türkiye"], "Sivasspor", 176, "left", 1500000),
+      createPlayer("siv-6", "Murat Paluli", "RB", 28, ["Türkiye"], "Sivasspor", 178, "right", 2000000),
+      createPlayer("siv-7", "Max Gradel", "LW", 36, ["Fildişi Sahili"], "Sivasspor", 175, "right", 1500000),
+      createPlayer("siv-8", "Erdoğan Yeşilyurt", "CM", 29, ["Türkiye"], "Sivasspor", 178, "right", 2000000),
+      createPlayer("siv-9", "Hakan Arslan", "CM", 32, ["Türkiye"], "Sivasspor", 180, "right", 2500000),
+      createPlayer("siv-10", "Clinton N'Jie", "RW", 30, ["Kamerun"], "Sivasspor", 177, "right", 3000000),
+      createPlayer("siv-11", "Arouna Koné", "ST", 41, ["Fildişi Sahili"], "Sivasspor", 182, "right", 500000),
+      createPlayer("siv-12", "Yasin Öztekin", "CAM", 37, ["Türkiye"], "Sivasspor", 173, "right", 1000000),
+      createPlayer("siv-13", "Emre Kılınç", "CM", 30, ["Türkiye"], "Sivasspor", 182, "right", 2000000),
+      createPlayer("siv-14", "Charis Charisis", "CB", 27, ["Yunanistan"], "Sivasspor", 186, "right", 1800000),
+      createPlayer("siv-15", "Samu Saiz", "AM", 28, ["İspanya"], "Sivasspor", 175, "left", 2500000)
+    ]
+  },
+  // Konyaspor
+  {
+    updatedAt: getISOString(),
+    id: "konyaspor",
+    players: [
+      createPlayer("kon-1", "Erhan Erentürk", "GK", 29, ["Türkiye"], "Konyaspor", 191, "right", 2500000),
+      createPlayer("kon-2", "İbrahim Şeşen", "GK", 24, ["Türkiye"], "Konyaspor", 188, "right", 800000),
+      createPlayer("kon-3", "Francisco Calvo", "CB", 31, ["Kosta Rika"], "Konyaspor", 185, "left", 3000000),
+      createPlayer("kon-4", "Adil Demirbağ", "CB", 29, ["Türkiye"], "Konyaspor", 187, "right", 2000000),
+      createPlayer("kon-5", "Ahmet Oğuz", "LB", 28, ["Türkiye"], "Konyaspor", 178, "left", 1800000),
+      createPlayer("kon-6", "Endri Çekiçi", "RB", 26, ["Türkiye"], "Konyaspor", 179, "right", 1500000),
+      createPlayer("kon-7", "Soner Dikmen", "CDM", 29, ["Türkiye"], "Konyaspor", 182, "right", 2500000),
+      createPlayer("kon-8", "Bruno Paz", "CM", 27, ["Portekiz"], "Konyaspor", 180, "right", 3000000),
+      createPlayer("kon-9", "Dimitrios Siopis", "CM", 30, ["Yunanistan"], "Konyaspor", 178, "right", 2800000),
+      createPlayer("kon-10", "Sokol Cikalleshi", "ST", 34, ["Arnavutluk"], "Konyaspor", 185, "right", 2000000),
+      createPlayer("kon-11", "Amilton", "RW", 26, ["Brezilya"], "Konyaspor", 177, "right", 2500000),
+      createPlayer("kon-12", "Uğurcan Yazğılı", "LW", 25, ["Türkiye"], "Konyaspor", 175, "left", 1800000),
+      createPlayer("kon-13", "Konrad Michalak", "AM", 26, ["Polonya"], "Konyaspor", 173, "right", 2200000),
+      createPlayer("kon-14", "Mame Thiam", "ST", 31, ["Senegal"], "Konyaspor", 187, "right", 2500000),
+      createPlayer("kon-15", "Marcin Cebula", "CM", 29, ["Polonya"], "Konyaspor", 181, "right", 2000000)
+    ]
+  },
+  // Adana Demirspor
+  {
+    updatedAt: getISOString(),
+    id: "adana-demirspor",
+    players: [
+      createPlayer("ads-1", "Eray Birniçan", "GK", 28, ["Türkiye"], "Adana Demirspor", 190, "right", 3000000),
+      createPlayer("ads-2", "Yavuz Aygün", "GK", 25, ["Türkiye"], "Adana Demirspor", 187, "right", 1000000),
+      createPlayer("ads-3", "Semih Güler", "CB", 29, ["Türkiye"], "Adana Demirspor", 189, "right", 2500000),
+      createPlayer("ads-4", "Abdulsamet Burak", "CB", 26, ["Türkiye"], "Adana Demirspor", 186, "right", 2000000),
+      createPlayer("ads-5", "Joher Rassoul", "LB", 27, ["Fransa"], "Adana Demirspor", 178, "left", 2200000),
+      createPlayer("ads-6", "Kevin Rodrigues", "LB", 29, ["Fransa"], "Adana Demirspor", 176, "left", 2800000),
+      createPlayer("ads-7", "Yusuf Sarı", "RB", 28, ["Türkiye"], "Adana Demirspor", 179, "right", 2000000),
+      createPlayer("ads-8", "Younès Belhanda", "CAM", 34, ["Fas"], "Adana Demirspor", 175, "right", 3500000),
+      createPlayer("ads-9", "Gökhan Inler", "CM", 40, ["İsviçre"], "Adana Demirspor", 183, "right", 1000000),
+      createPlayer("ads-10", "Emre Akbaba", "AM", 31, ["Türkiye"], "Adana Demirspor", 177, "right", 3000000),
+      createPlayer("ads-11", "Younès Belhanda", "RW", 34, ["Fas"], "Adana Demirspor", 175, "right", 3500000),
+      createPlayer("ads-12", "Mario Balotelli", "ST", 34, ["İtalya"], "Adana Demirspor", 189, "right", 4000000),
+      createPlayer("ads-13", "David Akintola", "ST", 28, ["Nijerya"], "Adana Demirspor", 185, "right", 2500000),
+      createPlayer("ads-14", "Abdullah Öztürk", "CM", 26, ["Türkiye"], "Adana Demirspor", 181, "right", 1800000),
+      createPlayer("ads-15", "Benjamin Stambouli", "CDM", 33, ["Fransa"], "Adana Demirspor", 184, "right", 2000000)
+    ]
+  },
+  // Kasımpaşa
+  {
+    updatedAt: getISOString(),
+    id: "kasimpasa",
+    players: [
+      createPlayer("kas-1", "Ertuğrul Taşkıran", "GK", 28, ["Türkiye"], "Kasımpaşa", 188, "right", 2000000),
+      createPlayer("kas-2", "Ramazan Köse", "GK", 24, ["Türkiye"], "Kasımpaşa", 186, "right", 800000),
+      createPlayer("kas-3", "Kenneth Omeruo", "CB", 30, ["Nijerya"], "Kasımpaşa", 185, "right", 3000000),
+      createPlayer("kas-4", "Tayyip Talha Sanuç", "CB", 24, ["Türkiye"], "Kasımpaşa", 190, "right", 2500000),
+      createPlayer("kas-5", "Mortadha Ben Ouanes", "LB", 26, ["Tunus"], "Kasımpaşa", 178, "left", 1800000),
+      createPlayer("kas-6", "Valentin Eysseric", "LW", 32, ["Fransa"], "Kasımpaşa", 175, "right", 2500000),
+      createPlayer("kas-7", "Mamadou Fall", "CM", 27, ["Senegal"], "Kasımpaşa", 182, "right", 2000000),
+      createPlayer("kas-8", "Florent Hadergjonaj", "RB", 29, ["İsviçre"], "Kasımpaşa", 177, "right", 2200000),
+      createPlayer("kas-9", "Ahmet Engin", "CDM", 28, ["Türkiye"], "Kasımpaşa", 183, "right", 1800000),
+      createPlayer("kas-10", "Yasin Öztekin", "RW", 37, ["Türkiye"], "Kasımpaşa", 173, "right", 1000000),
+      createPlayer("kas-11", "Aytac Kara", "ST", 32, ["Türkiye"], "Kasımpaşa", 184, "right", 2000000),
+      createPlayer("kas-12", "Mamadou Fall", "ST", 27, ["Senegal"], "Kasımpaşa", 186, "right", 2500000),
+      createPlayer("kas-13", "Stéphane Badji", "CM", 30, ["Senegal"], "Kasımpaşa", 185, "right", 2000000),
+      createPlayer("kas-14", "Tomás Barcos", "ST", 33, ["Arjantin"], "Kasımpaşa", 182, "right", 2200000),
+      createPlayer("kas-15", "Mustafa Pektemek", "ST", 35, ["Türkiye"], "Kasımpaşa", 180, "right", 1000000)
+    ]
+  },
+  // Gaziantep FK
+  {
+    updatedAt: getISOString(),
+    id: "gaziantep-fk",
+    players: [
+      createPlayer("gaz-1", "Günay Güvenç", "GK", 30, ["Türkiye"], "Gaziantep FK", 189, "right", 2500000),
+      createPlayer("gaz-2", "Batuhan Şen", "GK", 25, ["Türkiye"], "Gaziantep FK", 187, "right", 900000),
+      createPlayer("gaz-3", "Ertuğrul Ersoy", "CB", 28, ["Türkiye"], "Gaziantep FK", 188, "left", 2000000),
+      createPlayer("gaz-4", "Júnior Morais", "CB", 34, ["Brezilya"], "Gaziantep FK", 186, "right", 1800000),
+      createPlayer("gaz-5", "Paulo Henrique", "LB", 27, ["Brezilya"], "Gaziantep FK", 177, "left", 2200000),
+      createPlayer("gaz-6", "Souleymane Diarra", "RB", 29, ["Mali"], "Gaziantep FK", 178, "right", 2000000),
+      createPlayer("gaz-7", "Nani", "LW", 37, ["Portekiz"], "Gaziantep FK", 175, "right", 3000000),
+      createPlayer("gaz-8", "Oğuz Ceylan", "CM", 29, ["Türkiye"], "Gaziantep FK", 180, "right", 2200000),
+      createPlayer("gaz-9", "Brandon Deville", "CDM", 26, ["Fransa"], "Gaziantep FK", 184, "right", 2500000),
+      createPlayer("gaz-10", "Lucas Biglia", "CM", 38, ["Arjantin"], "Gaziantep FK", 182, "right", 2000000),
+      createPlayer("gaz-11", "Mirza Cihan", "RW", 28, ["Türkiye"], "Gaziantep FK", 176, "right", 1800000),
+      createPlayer("gaz-12", "Mustafa Eskihellaç", "ST", 30, ["Türkiye"], "Gaziantep FK", 185, "right", 2000000),
+      createPlayer("gaz-13", "Ángelo Sagal", "ST", 30, ["Şili"], "Gaziantep FK", 180, "right", 2500000),
+      createPlayer("gaz-14", "Deni Milošević", "AM", 27, ["Hırvatistan"], "Gaziantep FK", 175, "right", 2200000),
+      createPlayer("gaz-15", "Onurhan Babuscu", "CM", 24, ["Türkiye"], "Gaziantep FK", 179, "right", 1500000)
+    ]
+  },
+  // Ankaragücü
+  {
+    updatedAt: getISOString(),
+    id: "ankaragucu",
+    players: [
+      createPlayer("agu-1", "Bahadır Han Güngördü", "GK", 29, ["Türkiye"], "Ankaragücü", 188, "right", 2000000),
+      createPlayer("agu-2", "Doğukan Özkan", "GK", 23, ["Türkiye"], "Ankaragücü", 186, "right", 700000),
+      createPlayer("agu-3", "Matej Hanousek", "CB", 26, ["Çek Cumhuriyeti"], "Ankaragücü", 185, "right", 2200000),
+      createPlayer("agu-4", "Atakan Çankaya", "CB", 28, ["Türkiye"], "Ankaragücü", 187, "right", 1800000),
+      createPlayer("agu-5", "Nihad Mujakić", "LB", 25, ["Bosna-Hersek"], "Ankaragücü", 178, "left", 2000000),
+      createPlayer("agu-6", "Stelios Kitsiou", "RB", 30, ["Yunanistan"], "Ankaragücü", 179, "right", 1800000),
+      createPlayer("agu-7", "Pedro Augusto", "CDM", 28, ["Brezilya"], "Ankaragücü", 183, "right", 2500000),
+      createPlayer("agu-8", "Anastasios Chatzigiovanis", "CM", 27, ["Yunanistan"], "Ankaragücü", 181, "right", 2200000),
+      createPlayer("agu-9", "Ender Aygören", "CM", 28, ["Türkiye"], "Ankaragücü", 180, "right", 2000000),
+      createPlayer("agu-10", "Olimpiu Moruțan", "AM", 24, ["Romanya"], "Ankaragücü", 175, "right", 2500000),
+      createPlayer("agu-11", "Uroš Radaković", "ST", 26, ["Sırbistan"], "Ankaragücü", 187, "right", 2200000),
+      createPlayer("agu-12", "Ali Sowe", "ST", 29, ["Gambiya"], "Ankaragücü", 185, "right", 2500000),
+      createPlayer("agu-13", "Efkan Bekiroğlu", "LW", 29, ["Türkiye"], "Ankaragücü", 177, "right", 1800000),
+      createPlayer("agu-14", "Tolga Ciğerci", "CM", 32, ["Türkiye"], "Ankaragücü", 182, "right", 1500000),
+      createPlayer("agu-15", "Riad Bajić", "RW", 30, ["Bosna-Hersek"], "Ankaragücü", 176, "right", 2000000)
+    ]
+  },
+  // Antalyaspor
+  {
+    updatedAt: getISOString(),
+    id: "antalyaspor",
+    players: [
+      createPlayer("ant-1", "Helton Leite", "GK", 28, ["Brezilya"], "Antalyaspor", 190, "right", 3000000),
+      createPlayer("ant-2", "Alperen Uysal", "GK", 25, ["Türkiye"], "Antalyaspor", 187, "right", 1000000),
+      createPlayer("ant-3", "Ömer Toprak", "CB", 34, ["Türkiye"], "Antalyaspor", 186, "right", 2500000),
+      createPlayer("ant-4", "Veysel Sarı", "CB", 30, ["Türkiye"], "Antalyaspor", 188, "right", 2000000),
+      createPlayer("ant-5", "Dudu", "LB", 27, ["Brezilya"], "Antalyaspor", 176, "left", 2200000),
+      createPlayer("ant-6", "Ömer Alıcı", "RB", 28, ["Türkiye"], "Antalyaspor", 178, "right", 1800000),
+      createPlayer("ant-7", "Uros Milovanovic", "CDM", 29, ["Sırbistan"], "Antalyaspor", 185, "right", 2500000),
+      createPlayer("ant-8", "Fredy", "CM", 32, ["Brezilya"], "Antalyaspor", 181, "right", 2000000),
+      createPlayer("ant-9", "Ersin Karaer", "CM", 26, ["Türkiye"], "Antalyaspor", 180, "right", 1800000),
+      createPlayer("ant-10", "Sam Larsson", "LW", 31, ["İsveç"], "Antalyaspor", 177, "right", 2500000),
+      createPlayer("ant-11", "Adam Buksa", "ST", 27, ["Polonya"], "Antalyaspor", 193, "right", 3000000),
+      createPlayer("ant-12", "Wright", "RW", 28, ["ABD"], "Antalyaspor", 175, "right", 2200000),
+      createPlayer("ant-13", "Hakan Yılmaz", "AM", 29, ["Türkiye"], "Antalyaspor", 173, "right", 2000000),
+      createPlayer("ant-14", "Luiz Adriano", "ST", 37, ["Brezilya"], "Antalyaspor", 183, "right", 1500000),
+      createPlayer("ant-15", "Eren Albayrak", "CB", 27, ["Türkiye"], "Antalyaspor", 184, "left", 1800000)
+    ]
+  },
+  // İstanbulspor
+  {
+    updatedAt: getISOString(),
+    id: "istanbulspor",
+    players: [
+      createPlayer("ist-1", "Jensen", "GK", 28, ["Danimarka"], "İstanbulspor", 189, "right", 2200000),
+      createPlayer("ist-2", "Alp Arda", "GK", 24, ["Türkiye"], "İstanbulspor", 187, "right", 800000),
+      createPlayer("ist-3", "Duhan Aksu", "CB", 26, ["Türkiye"], "İstanbulspor", 186, "right", 1800000),
+      createPlayer("ist-4", "Demeaco Duhaney", "CB", 25, ["İngiltere"], "İstanbulspor", 185, "right", 2000000),
+      createPlayer("ist-5", "Muhammed Emin Sarıkaya", "LB", 27, ["Türkiye"], "İstanbulspor", 177, "left", 1500000),
+      createPlayer("ist-6", "Davidson", "RB", 29, ["Brezilya"], "İstanbulspor", 178, "right", 1800000),
+      createPlayer("ist-7", "Ali Yavuz Kol", "CDM", 28, ["Türkiye"], "İstanbulspor", 183, "right", 2000000),
+      createPlayer("ist-8", "Jetmir Topalli", "CM", 26, ["Arnavutluk"], "İstanbulspor", 181, "right", 2200000),
+      createPlayer("ist-9", "Eduardo", "CM", 32, ["Brezilya"], "İstanbulspor", 180, "right", 2000000),
+      createPlayer("ist-10", "Florian Loshaj", "AM", 26, ["Kosova"], "İstanbulspor", 175, "right", 2500000),
+      createPlayer("ist-11", "Valon Ethemi", "ST", 27, ["Kosova"], "İstanbulspor", 187, "right", 2800000),
+      createPlayer("ist-12", "Aldair", "ST", 28, ["Brezilya"], "İstanbulspor", 185, "right", 2500000),
+      createPlayer("ist-13", "Alaaddin Okumuş", "LW", 25, ["Türkiye"], "İstanbulspor", 176, "left", 1800000),
+      createPlayer("ist-14", "İbrahim Yılmaz", "RW", 27, ["Türkiye"], "İstanbulspor", 175, "right", 1500000),
+      createPlayer("ist-15", "Okan Derici", "CM", 28, ["Türkiye"], "İstanbulspor", 179, "right", 1800000)
+    ]
+  },
+  // Samsunspor
+  {
+    updatedAt: getISOString(),
+    id: "samsunspor",
+    players: [
+      createPlayer("sam-1", "Özgür Özkaya", "GK", 30, ["Türkiye"], "Samsunspor", 188, "right", 2500000),
+      createPlayer("sam-2", "Nusret Pekdemir", "GK", 25, ["Türkiye"], "Samsunspor", 186, "right", 900000),
+      createPlayer("sam-3", "Yasin Öztekin", "CB", 37, ["Türkiye"], "Samsunspor", 185, "right", 1000000),
+      createPlayer("sam-4", "Landry Dimata", "CB", 26, ["Belçika"], "Samsunspor", 187, "right", 2200000),
+      createPlayer("sam-5", "Yasin Öztekin", "LB", 37, ["Türkiye"], "Samsunspor", 177, "left", 1000000),
+      createPlayer("sam-6", "Ahmet Sagat", "RB", 28, ["Türkiye"], "Samsunspor", 178, "right", 1800000),
+      createPlayer("sam-7", "Moryké Fofana", "CDM", 28, ["Fransa"], "Samsunspor", 184, "right", 2500000),
+      createPlayer("sam-8", "Gaëtan Laura", "CM", 26, ["Fransa"], "Samsunspor", 181, "right", 2200000),
+      createPlayer("sam-9", "Elhadj Bah", "CM", 27, ["Fransa"], "Samsunspor", 180, "right", 2000000),
+      createPlayer("sam-10", "Marius Mouandilmadji", "AM", 25, ["Çad"], "Samsunspor", 175, "right", 2500000),
+      createPlayer("sam-11", "Osman Çelik", "ST", 29, ["Türkiye"], "Samsunspor", 186, "right", 2200000),
+      createPlayer("sam-12", "Emre Kılınç", "ST", 30, ["Türkiye"], "Samsunspor", 185, "right", 2500000),
+      createPlayer("sam-13", "Taylan Antalyalı", "LW", 28, ["Türkiye"], "Samsunspor", 177, "right", 1800000),
+      createPlayer("sam-14", "Yannick Bolasie", "RW", 35, ["Kongo"], "Samsunspor", 176, "right", 2000000),
+      createPlayer("sam-15", "Emre Taşdemir", "CB", 29, ["Türkiye"], "Samsunspor", 183, "left", 1800000)
+    ]
+  },
+  // Hatayspor
+  {
+    updatedAt: getISOString(),
+    id: "hatayspor",
+    players: [
+      createPlayer("hat-1", "Munir", "GK", 29, ["Fas"], "Hatayspor", 189, "right", 2500000),
+      createPlayer("hat-2", "Erce Kardeşler", "GK", 26, ["Türkiye"], "Hatayspor", 186, "right", 1000000),
+      createPlayer("hat-3", "Faouzi Ghoulam", "CB", 33, ["Cezayir"], "Hatayspor", 187, "left", 2000000),
+      createPlayer("hat-4", "Sami Fradj", "CB", 28, ["Tunus"], "Hatayspor", 185, "right", 1800000),
+      createPlayer("hat-5", "Burak Bekaroğlu", "LB", 27, ["Türkiye"], "Hatayspor", 177, "left", 1500000),
+      createPlayer("hat-6", "Mehdi Boussefiane", "RB", 26, ["Fas"], "Hatayspor", 178, "right", 1800000),
+      createPlayer("hat-7", "Didier Lamkel Zé", "CM", 27, ["Kamerun"], "Hatayspor", 182, "right", 2500000),
+      createPlayer("hat-8", "Aminu Umar", "CDM", 29, ["Nijerya"], "Hatayspor", 184, "right", 2200000),
+      createPlayer("hat-9", "Rayane Aabid", "CM", 28, ["Fas"], "Hatayspor", 180, "right", 2000000),
+      createPlayer("hat-10", "Ayoub El Kaabi", "ST", 30, ["Fas"], "Hatayspor", 186, "right", 3000000),
+      createPlayer("hat-11", "Rigobert Song", "ST", 47, ["Kamerun"], "Hatayspor", 184, "right", 500000),
+      createPlayer("hat-12", "Fisayo Dele-Bashiru", "AM", 27, ["Nijerya"], "Hatayspor", 175, "right", 2500000),
+      createPlayer("hat-13", "Rúben Ribeiro", "LW", 35, ["Portekiz"], "Hatayspor", 176, "left", 1500000),
+      createPlayer("hat-14", "Felipe Avenatti", "RW", 30, ["Uruguay"], "Hatayspor", 187, "right", 2200000),
+      createPlayer("hat-15", "Görkem Sağlam", "CM", 26, ["Türkiye"], "Hatayspor", 179, "right", 1800000)
+    ]
+  },
+  // Rizespor
+  {
+    updatedAt: getISOString(),
+    id: "rizespor",
+    players: [
+      createPlayer("riz-1", "Gökhan Akkan", "GK", 29, ["Türkiye"], "Rizespor", 188, "right", 2500000),
+      createPlayer("riz-2", "Çağlar Şahin Akbaba", "GK", 25, ["Türkiye"], "Rizespor", 186, "right", 900000),
+      createPlayer("riz-3", "Emirhan Topçu", "CB", 27, ["Türkiye"], "Rizespor", 187, "right", 2000000),
+      createPlayer("riz-4", "Dorian Rotariu", "CB", 29, ["Romanya"], "Rizespor", 185, "right", 2200000),
+      createPlayer("riz-5", "Emirhan Topçu", "LB", 27, ["Türkiye"], "Rizespor", 177, "left", 2000000),
+      createPlayer("riz-6", "Güray Vural", "RB", 32, ["Türkiye"], "Rizespor", 178, "right", 1500000),
+      createPlayer("riz-7", "Alperen Uysal", "CDM", 25, ["Türkiye"], "Rizespor", 183, "right", 1800000),
+      createPlayer("riz-8", "Fabiano", "CM", 30, ["Brezilya"], "Rizespor", 181, "right", 2200000),
+      createPlayer("riz-9", "Altin Kryeziu", "CM", 26, ["Arnavutluk"], "Rizespor", 180, "right", 2000000),
+      createPlayer("riz-10", "Miroslav Kocic", "AM", 28, ["Sırbistan"], "Rizespor", 175, "right", 2500000),
+      createPlayer("riz-11", "Yasin Pehlivan", "ST", 30, ["Türkiye"], "Rizespor", 186, "right", 2200000),
+      createPlayer("riz-12", "Gustavo Sauer", "ST", 30, ["Brezilya"], "Rizespor", 185, "right", 2500000),
+      createPlayer("riz-13", "Emirhan Topçu", "LW", 27, ["Türkiye"], "Rizespor", 176, "left", 2000000),
+      createPlayer("riz-14", "İbrahim Olawoyin", "RW", 26, ["Nijerya"], "Rizespor", 175, "right", 2200000),
+      createPlayer("riz-15", "Attila Mocsi", "CB", 28, ["Macaristan"], "Rizespor", 184, "right", 2000000)
+    ]
+  },
+  // Pendikspor
+  {
+    updatedAt: getISOString(),
+    id: "pendikspor",
+    players: [
+      createPlayer("pen-1", "Murat Akça", "GK", 30, ["Türkiye"], "Pendikspor", 188, "right", 2000000),
+      createPlayer("pen-2", "Ertuğrul Taşkıran", "GK", 28, ["Türkiye"], "Pendikspor", 186, "right", 1500000),
+      createPlayer("pen-3", "Alpaslan Öztürk", "CB", 31, ["Türkiye"], "Pendikspor", 187, "right", 1800000),
+      createPlayer("pen-4", "Emre Taşdemir", "CB", 29, ["Türkiye"], "Pendikspor", 185, "left", 1500000),
+      createPlayer("pen-5", "Erdem Özgenç", "LB", 27, ["Türkiye"], "Pendikspor", 177, "left", 1300000),
+      createPlayer("pen-6", "Gökhan Süzen", "RB", 28, ["Türkiye"], "Pendikspor", 178, "right", 1500000),
+      createPlayer("pen-7", "Thibaut Vion", "CDM", 27, ["Fransa"], "Pendikspor", 183, "right", 2000000),
+      createPlayer("pen-8", "Halil Akbunar", "CM", 30, ["Türkiye"], "Pendikspor", 181, "right", 1800000),
+      createPlayer("pen-9", "Mehdi Bourabia", "CM", 32, ["Fas"], "Pendikspor", 180, "right", 2000000),
+      createPlayer("pen-10", "Abdoulaye Diaby", "AM", 32, ["Mali"], "Pendikspor", 175, "right", 2200000),
+      createPlayer("pen-11", "Erencan Yardımcı", "ST", 28, ["Türkiye"], "Pendikspor", 186, "right", 2000000),
+      createPlayer("pen-12", "Murat Yıldırım", "ST", 30, ["Türkiye"], "Pendikspor", 185, "right", 1800000),
+      createPlayer("pen-13", "Leandro Kappel", "LW", 27, ["Brezilya"], "Pendikspor", 176, "left", 2200000),
+      createPlayer("pen-14", "İbrahim Yılmaz", "RW", 27, ["Türkiye"], "Pendikspor", 175, "right", 1500000),
+      createPlayer("pen-15", "Emre Akbaba", "CM", 31, ["Türkiye"], "Pendikspor", 179, "right", 1800000)
+    ]
+  },
+  // Manchester City
+  {
+    updatedAt: getISOString(),
+    id: "manchester-city",
+    players: [
+      createPlayer("mci-1", "Ederson", "GK", 30, ["Brezilya"], "Manchester City", 188, "right", 50000000),
+      createPlayer("mci-2", "Stefan Ortega", "GK", 31, ["Almanya"], "Manchester City", 185, "right", 5000000),
+      createPlayer("mci-3", "Rúben Dias", "CB", 27, ["Portekiz"], "Manchester City", 187, "right", 80000000),
+      createPlayer("mci-4", "John Stones", "CB", 30, ["İngiltere"], "Manchester City", 188, "right", 40000000),
+      createPlayer("mci-5", "Nathan Aké", "LB", 29, ["Hollanda"], "Manchester City", 180, "left", 35000000),
+      createPlayer("mci-6", "Kyle Walker", "RB", 34, ["İngiltere"], "Manchester City", 183, "right", 15000000),
+      createPlayer("mci-7", "Rodri", "CDM", 28, ["İspanya"], "Manchester City", 191, "right", 100000000),
+      createPlayer("mci-8", "Kevin De Bruyne", "CAM", 33, ["Belçika"], "Manchester City", 181, "right", 80000000),
+      createPlayer("mci-9", "Bernardo Silva", "CM", 30, ["Portekiz"], "Manchester City", 173, "left", 70000000),
+      createPlayer("mci-10", "Phil Foden", "CAM", 24, ["İngiltere"], "Manchester City", 171, "right", 90000000),
+      createPlayer("mci-11", "Erling Haaland", "ST", 24, ["Norveç"], "Manchester City", 194, "left", 180000000)
+    ]
+  },
+  // Arsenal
+  {
+    updatedAt: getISOString(),
+    id: "arsenal",
+    players: [
+      createPlayer("ars-1", "Aaron Ramsdale", "GK", 26, ["İngiltere"], "Arsenal", 188, "right", 30000000),
+      createPlayer("ars-2", "David Raya", "GK", 29, ["İspanya"], "Arsenal", 186, "right", 25000000),
+      createPlayer("ars-3", "William Saliba", "CB", 23, ["Fransa"], "Arsenal", 192, "right", 50000000),
+      createPlayer("ars-4", "Gabriel", "CB", 26, ["Brezilya"], "Arsenal", 190, "left", 40000000),
+      createPlayer("ars-5", "Oleksandr Zinchenko", "LB", 27, ["Ukrayna"], "Arsenal", 175, "left", 35000000),
+      createPlayer("ars-6", "Ben White", "RB", 27, ["İngiltere"], "Arsenal", 185, "right", 45000000),
+      createPlayer("ars-7", "Declan Rice", "CDM", 25, ["İngiltere"], "Arsenal", 185, "right", 100000000),
+      createPlayer("ars-8", "Martin Ødegaard", "CAM", 25, ["Norveç"], "Arsenal", 178, "left", 90000000),
+      createPlayer("ars-9", "Kai Havertz", "CM", 25, ["Almanya"], "Arsenal", 193, "right", 70000000),
+      createPlayer("ars-10", "Bukayo Saka", "RW", 23, ["İngiltere"], "Arsenal", 178, "left", 120000000),
+      createPlayer("ars-11", "Gabriel Martinelli", "LW", 23, ["Brezilya"], "Arsenal", 178, "right", 80000000)
+    ]
+  },
+  // Liverpool
+  {
+    updatedAt: getISOString(),
+    id: "liverpool",
+    players: [
+      createPlayer("liv-1", "Alisson", "GK", 31, ["Brezilya"], "Liverpool", 191, "right", 60000000),
+      createPlayer("liv-2", "Caoimhin Kelleher", "GK", 26, ["İrlanda"], "Liverpool", 188, "right", 8000000),
+      createPlayer("liv-3", "Virgil van Dijk", "CB", 33, ["Hollanda"], "Liverpool", 193, "right", 50000000),
+      createPlayer("liv-4", "Joël Matip", "CB", 33, ["Kamerun"], "Liverpool", 195, "right", 15000000),
+      createPlayer("liv-5", "Andy Robertson", "LB", 30, ["İskoçya"], "Liverpool", 178, "left", 40000000),
+      createPlayer("liv-6", "Trent Alexander-Arnold", "RB", 26, ["İngiltere"], "Liverpool", 180, "right", 70000000),
+      createPlayer("liv-7", "Fabinho", "CDM", 31, ["Brezilya"], "Liverpool", 188, "right", 50000000),
+      createPlayer("liv-8", "Jordan Henderson", "CM", 34, ["İngiltere"], "Liverpool", 182, "right", 20000000),
+      createPlayer("liv-9", "Mohamed Salah", "RW", 32, ["Mısır"], "Liverpool", 175, "left", 100000000),
+      createPlayer("liv-10", "Diogo Jota", "LW", 27, ["Portekiz"], "Liverpool", 178, "right", 45000000),
+      createPlayer("liv-11", "Darwin Núñez", "ST", 25, ["Uruguay"], "Liverpool", 187, "right", 70000000)
+    ]
+  },
+  // Manchester United
+  {
+    updatedAt: getISOString(),
+    id: "manchester-united",
+    players: [
+      createPlayer("mun-1", "André Onana", "GK", 28, ["Kamerun"], "Manchester United", 190, "right", 35000000),
+      createPlayer("mun-2", "Altay Bayındır", "GK", 26, ["Türkiye"], "Manchester United", 192, "right", 5000000),
+      createPlayer("mun-3", "Raphaël Varane", "CB", 31, ["Fransa"], "Manchester United", 191, "right", 40000000),
+      createPlayer("mun-4", "Lisandro Martínez", "CB", 26, ["Arjantin"], "Manchester United", 178, "left", 45000000),
+      createPlayer("mun-5", "Luke Shaw", "LB", 29, ["İngiltere"], "Manchester United", 185, "left", 35000000),
+      createPlayer("mun-6", "Diogo Dalot", "RB", 25, ["Portekiz"], "Manchester United", 183, "right", 30000000),
+      createPlayer("mun-7", "Casemiro", "CDM", 32, ["Brezilya"], "Manchester United", 185, "right", 40000000),
+      createPlayer("mun-8", "Bruno Fernandes", "CAM", 30, ["Portekiz"], "Manchester United", 179, "right", 70000000),
+      createPlayer("mun-9", "Christian Eriksen", "CM", 32, ["Danimarka"], "Manchester United", 182, "right", 20000000),
+      createPlayer("mun-10", "Marcus Rashford", "LW", 27, ["İngiltere"], "Manchester United", 180, "right", 75000000),
+      createPlayer("mun-11", "Rasmus Højlund", "ST", 21, ["Danimarka"], "Manchester United", 191, "right", 65000000)
+    ]
+  },
+  // Chelsea
+  {
+    updatedAt: getISOString(),
+    id: "chelsea",
+    players: [
+      createPlayer("che-1", "Robert Sánchez", "GK", 27, ["İspanya"], "Chelsea", 197, "right", 25000000),
+      createPlayer("che-2", "Djordje Petrović", "GK", 24, ["Sırbistan"], "Chelsea", 194, "right", 15000000),
+      createPlayer("che-3", "Thiago Silva", "CB", 40, ["Brezilya"], "Chelsea", 183, "right", 8000000),
+      createPlayer("che-4", "Axel Disasi", "CB", 26, ["Fransa"], "Chelsea", 190, "right", 35000000),
+      createPlayer("che-5", "Ben Chilwell", "LB", 28, ["İngiltere"], "Chelsea", 178, "left", 35000000),
+      createPlayer("che-6", "Reece James", "RB", 25, ["İngiltere"], "Chelsea", 182, "right", 50000000),
+      createPlayer("che-7", "Moisés Caicedo", "CDM", 23, ["Ekvador"], "Chelsea", 178, "right", 80000000),
+      createPlayer("che-8", "Enzo Fernández", "CM", 23, ["Arjantin"], "Chelsea", 178, "right", 70000000),
+      createPlayer("che-9", "Cole Palmer", "CAM", 22, ["İngiltere"], "Chelsea", 185, "left", 40000000),
+      createPlayer("che-10", "Raheem Sterling", "LW", 30, ["İngiltere"], "Chelsea", 170, "right", 40000000),
+      createPlayer("che-11", "Nicolas Jackson", "ST", 23, ["Senegal"], "Chelsea", 185, "right", 30000000)
+    ]
+  },
+  // Real Madrid
+  {
+    updatedAt: getISOString(),
+    id: "real-madrid",
+    players: [
+      createPlayer("rma-1", "Thibaut Courtois", "GK", 32, ["Belçika"], "Real Madrid", 199, "right", 40000000),
+      createPlayer("rma-2", "Andriy Lunin", "GK", 25, ["Ukrayna"], "Real Madrid", 192, "right", 5000000),
+      createPlayer("rma-3", "David Alaba", "CB", 32, ["Avusturya"], "Real Madrid", 180, "left", 45000000),
+      createPlayer("rma-4", "Éder Militão", "CB", 26, ["Brezilya"], "Real Madrid", 186, "right", 70000000),
+      createPlayer("rma-5", "Ferland Mendy", "LB", 29, ["Fransa"], "Real Madrid", 180, "left", 25000000),
+      createPlayer("rma-6", "Dani Carvajal", "RB", 32, ["İspanya"], "Real Madrid", 173, "right", 15000000),
+      createPlayer("rma-7", "Aurélien Tchouaméni", "CDM", 24, ["Fransa"], "Real Madrid", 187, "right", 90000000),
+      createPlayer("rma-8", "Luka Modrić", "CM", 39, ["Hırvatistan"], "Real Madrid", 172, "right", 10000000),
+      createPlayer("rma-9", "Toni Kroos", "CM", 34, ["Almanya"], "Real Madrid", 183, "left", 12000000),
+      createPlayer("rma-10", "Fede Valverde", "CM", 26, ["Uruguay"], "Real Madrid", 182, "right", 90000000),
+      createPlayer("rma-11", "Vinícius Jr.", "LW", 24, ["Brezilya"], "Real Madrid", 176, "right", 150000000)
+    ]
+  },
+  // Barcelona
+  {
+    updatedAt: getISOString(),
+    id: "barcelona",
+    players: [
+      createPlayer("bar-1", "Marc-André ter Stegen", "GK", 32, ["Almanya"], "Barcelona", 187, "right", 40000000),
+      createPlayer("bar-2", "Iñaki Peña", "GK", 25, ["İspanya"], "Barcelona", 188, "right", 8000000),
+      createPlayer("bar-3", "Ronald Araújo", "CB", 25, ["Uruguay"], "Barcelona", 191, "right", 70000000),
+      createPlayer("bar-4", "Jules Koundé", "CB", 26, ["Fransa"], "Barcelona", 178, "right", 60000000),
+      createPlayer("bar-5", "Alejandro Balde", "LB", 21, ["İspanya"], "Barcelona", 175, "left", 80000000),
+      createPlayer("bar-6", "João Cancelo", "RB", 30, ["Portekiz"], "Barcelona", 182, "right", 35000000),
+      createPlayer("bar-7", "Pedri", "CM", 22, ["İspanya"], "Barcelona", 174, "left", 100000000),
+      createPlayer("bar-8", "Gavi", "CM", 20, ["İspanya"], "Barcelona", 173, "left", 90000000),
+      createPlayer("bar-9", "Frenkie de Jong", "CM", 27, ["Hollanda"], "Barcelona", 180, "right", 70000000),
+      createPlayer("bar-10", "Robert Lewandowski", "ST", 36, ["Polonya"], "Barcelona", 185, "right", 30000000),
+      createPlayer("bar-11", "Lamine Yamal", "RW", 17, ["İspanya"], "Barcelona", 180, "left", 75000000)
+    ]
+  },
+  // Atlético Madrid
+  {
+    updatedAt: getISOString(),
+    id: "atletico-madrid",
+    players: [
+      createPlayer("atm-1", "Jan Oblak", "GK", 31, ["Slovenya"], "Atlético Madrid", 188, "right", 45000000),
+      createPlayer("atm-2", "Ivo Grbić", "GK", 28, ["Hırvatistan"], "Atlético Madrid", 193, "right", 5000000),
+      createPlayer("atm-3", "José Giménez", "CB", 29, ["Uruguay"], "Atlético Madrid", 185, "right", 40000000),
+      createPlayer("atm-4", "Stefan Savić", "CB", 33, ["Karadağ"], "Atlético Madrid", 187, "right", 15000000),
+      createPlayer("atm-5", "Reinildo Mandava", "LB", 30, ["Mozambik"], "Atlético Madrid", 178, "left", 20000000),
+      createPlayer("atm-6", "Nahuel Molina", "RB", 26, ["Arjantin"], "Atlético Madrid", 175, "right", 35000000),
+      createPlayer("atm-7", "Rodrigo de Paul", "CM", 30, ["Arjantin"], "Atlético Madrid", 180, "right", 40000000),
+      createPlayer("atm-8", "Koke", "CM", 32, ["İspanya"], "Atlético Madrid", 176, "right", 20000000),
+      createPlayer("atm-9", "Saúl Ñíguez", "CM", 29, ["İspanya"], "Atlético Madrid", 184, "left", 30000000),
+      createPlayer("atm-10", "Antoine Griezmann", "ST", 33, ["Fransa"], "Atlético Madrid", 176, "right", 35000000),
+      createPlayer("atm-11", "Álvaro Morata", "ST", 31, ["İspanya"], "Atlético Madrid", 190, "right", 25000000)
+    ]
+  },
+  // Sevilla
+  {
+    updatedAt: getISOString(),
+    id: "sevilla",
+    players: [
+      createPlayer("sev-1", "Yassine Bounou", "GK", 33, ["Fas"], "Sevilla", 192, "right", 20000000),
+      createPlayer("sev-2", "Marko Dmitrović", "GK", 32, ["Sırbistan"], "Sevilla", 192, "right", 8000000),
+      createPlayer("sev-3", "Sergio Ramos", "CB", 38, ["İspanya"], "Sevilla", 184, "right", 5000000),
+      createPlayer("sev-4", "Loïc Badé", "CB", 24, ["Fransa"], "Sevilla", 190, "right", 15000000),
+      createPlayer("sev-5", "Marcos Acuña", "LB", 33, ["Arjantin"], "Sevilla", 172, "left", 12000000),
+      createPlayer("sev-6", "Jesús Navas", "RB", 39, ["İspanya"], "Sevilla", 172, "right", 2000000),
+      createPlayer("sev-7", "Fernando", "CDM", 37, ["Brezilya"], "Sevilla", 183, "right", 5000000),
+      createPlayer("sev-8", "Joan Jordán", "CM", 30, ["İspanya"], "Sevilla", 184, "right", 15000000),
+      createPlayer("sev-9", "Iván Rakitić", "CM", 36, ["Hırvatistan"], "Sevilla", 184, "right", 8000000),
+      createPlayer("sev-10", "Youssef En-Nesyri", "ST", 27, ["Fas"], "Sevilla", 189, "right", 30000000),
+      createPlayer("sev-11", "Lucas Ocampos", "RW", 30, ["Arjantin"], "Sevilla", 187, "right", 20000000)
+    ]
+  },
+  // Real Sociedad
+  {
+    updatedAt: getISOString(),
+    id: "real-sociedad",
+    players: [
+      createPlayer("rso-1", "Álex Remiro", "GK", 29, ["İspanya"], "Real Sociedad", 189, "right", 18000000),
+      createPlayer("rso-2", "Unai Marrero", "GK", 27, ["İspanya"], "Real Sociedad", 188, "right", 3000000),
+      createPlayer("rso-3", "Robin Le Normand", "CB", 28, ["İspanya"], "Real Sociedad", 187, "right", 25000000),
+      createPlayer("rso-4", "Igor Zubeldia", "CB", 27, ["İspanya"], "Real Sociedad", 182, "right", 20000000),
+      createPlayer("rso-5", "Aihen Muñoz", "LB", 26, ["İspanya"], "Real Sociedad", 175, "left", 15000000),
+      createPlayer("rso-6", "Hamari Traoré", "RB", 32, ["Mali"], "Real Sociedad", 175, "right", 12000000),
+      createPlayer("rso-7", "Martín Zubimendi", "CDM", 25, ["İspanya"], "Real Sociedad", 183, "right", 60000000),
+      createPlayer("rso-8", "Mikel Merino", "CM", 28, ["İspanya"], "Real Sociedad", 188, "right", 40000000),
+      createPlayer("rso-9", "Takefusa Kubo", "RW", 23, ["Japonya"], "Real Sociedad", 173, "left", 50000000),
+      createPlayer("rso-10", "Mikel Oyarzabal", "LW", 27, ["İspanya"], "Real Sociedad", 181, "right", 45000000),
+      createPlayer("rso-11", "Alexander Sørloth", "ST", 29, ["Norveç"], "Real Sociedad", 195, "right", 35000000)
+    ]
+  },
+  // Juventus
+  {
+    updatedAt: getISOString(),
+    id: "juventus",
+    players: [
+      createPlayer("juv-1", "Wojciech Szczęsny", "GK", 34, ["Polonya"], "Juventus", 196, "right", 15000000),
+      createPlayer("juv-2", "Mattia Perin", "GK", 31, ["İtalya"], "Juventus", 188, "right", 8000000),
+      createPlayer("juv-3", "Gleison Bremer", "CB", 27, ["Brezilya"], "Juventus", 188, "right", 50000000),
+      createPlayer("juv-4", "Danilo", "CB", 33, ["Brezilya"], "Juventus", 184, "right", 20000000),
+      createPlayer("juv-5", "Alex Sandro", "LB", 34, ["Brezilya"], "Juventus", 181, "left", 10000000),
+      createPlayer("juv-6", "Juan Cuadrado", "RB", 36, ["Kolombiya"], "Juventus", 176, "right", 5000000),
+      createPlayer("juv-7", "Manuel Locatelli", "CDM", 26, ["İtalya"], "Juventus", 185, "right", 35000000),
+      createPlayer("juv-8", "Paul Pogba", "CM", 31, ["Fransa"], "Juventus", 191, "right", 25000000),
+      createPlayer("juv-9", "Federico Chiesa", "LW", 26, ["İtalya"], "Juventus", 175, "right", 50000000),
+      createPlayer("juv-10", "Dušan Vlahović", "ST", 24, ["Sırbistan"], "Juventus", 190, "right", 70000000),
+      createPlayer("juv-11", "Moise Kean", "ST", 24, ["İtalya"], "Juventus", 183, "right", 20000000)
+    ]
+  },
+  // Inter Milan
+  {
+    updatedAt: getISOString(),
+    id: "inter-milan",
+    players: [
+      createPlayer("int-1", "Yann Sommer", "GK", 35, ["İsviçre"], "Inter Milan", 183, "right", 8000000),
+      createPlayer("int-2", "Emil Audero", "GK", 27, ["İtalya"], "Inter Milan", 190, "right", 10000000),
+      createPlayer("int-3", "Francesco Acerbi", "CB", 36, ["İtalya"], "Inter Milan", 192, "left", 10000000),
+      createPlayer("int-4", "Alessandro Bastoni", "CB", 25, ["İtalya"], "Inter Milan", 190, "left", 60000000),
+      createPlayer("int-5", "Federico Dimarco", "LB", 27, ["İtalya"], "Inter Milan", 175, "left", 35000000),
+      createPlayer("int-6", "Denzel Dumfries", "RB", 28, ["Hollanda"], "Inter Milan", 188, "right", 30000000),
+      createPlayer("int-7", "Nicolò Barella", "CM", 27, ["İtalya"], "Inter Milan", 175, "right", 70000000),
+      createPlayer("int-8", "Hakan Çalhanoğlu", "CM", 30, ["Türkiye"], "Inter Milan", 178, "right", 30000000),
+      createPlayer("int-9", "Henrikh Mkhitaryan", "CAM", 35, ["Ermenistan"], "Inter Milan", 177, "right", 10000000),
+      createPlayer("int-10", "Lautaro Martínez", "ST", 27, ["Arjantin"], "Inter Milan", 174, "right", 110000000),
+      createPlayer("int-11", "Marcus Thuram", "ST", 27, ["Fransa"], "Inter Milan", 192, "right", 50000000)
+    ]
+  },
+  // AC Milan
+  {
+    updatedAt: getISOString(),
+    id: "ac-milan",
+    players: [
+      createPlayer("mil-1", "Mike Maignan", "GK", 29, ["Fransa"], "AC Milan", 191, "right", 45000000),
+      createPlayer("mil-2", "Antonio Mirante", "GK", 41, ["İtalya"], "AC Milan", 193, "right", 500000),
+      createPlayer("mil-3", "Fikayo Tomori", "CB", 26, ["İngiltere"], "AC Milan", 185, "right", 40000000),
+      createPlayer("mil-4", "Simon Kjær", "CB", 35, ["Danimarka"], "AC Milan", 190, "right", 8000000),
+      createPlayer("mil-5", "Theo Hernández", "LB", 26, ["Fransa"], "AC Milan", 184, "left", 60000000),
+      createPlayer("mil-6", "Davide Calabria", "RB", 28, ["İtalya"], "AC Milan", 177, "right", 20000000),
+      createPlayer("mil-7", "Ismaël Bennacer", "CDM", 27, ["Cezayir"], "AC Milan", 175, "right", 40000000),
+      createPlayer("mil-8", "Sandro Tonali", "CM", 24, ["İtalya"], "AC Milan", 181, "right", 50000000),
+      createPlayer("mil-9", "Rafael Leão", "LW", 25, ["Portekiz"], "AC Milan", 188, "right", 90000000),
+      createPlayer("mil-10", "Olivier Giroud", "ST", 38, ["Fransa"], "AC Milan", 193, "right", 3000000),
+      createPlayer("mil-11", "Christian Pulisic", "RW", 26, ["ABD"], "AC Milan", 178, "left", 40000000)
+    ]
+  },
+  // Napoli
+  {
+    updatedAt: getISOString(),
+    id: "napoli",
+    players: [
+      createPlayer("nap-1", "Alex Meret", "GK", 27, ["İtalya"], "Napoli", 190, "right", 20000000),
+      createPlayer("nap-2", "Pierluigi Gollini", "GK", 29, ["İtalya"], "Napoli", 194, "right", 8000000),
+      createPlayer("nap-3", "Amir Rrahmani", "CB", 30, ["Kosova"], "Napoli", 192, "right", 25000000),
+      createPlayer("nap-4", "Juan Jesus", "CB", 33, ["Brezilya"], "Napoli", 185, "left", 8000000),
+      createPlayer("nap-5", "Mário Rui", "LB", 33, ["Portekiz"], "Napoli", 170, "left", 10000000),
+      createPlayer("nap-6", "Giovanni Di Lorenzo", "RB", 31, ["İtalya"], "Napoli", 183, "right", 25000000),
+      createPlayer("nap-7", "Stanislav Lobotka", "CDM", 30, ["Slovakya"], "Napoli", 170, "right", 35000000),
+      createPlayer("nap-8", "André-Frank Zambo Anguissa", "CM", 29, ["Kamerun"], "Napoli", 184, "right", 40000000),
+      createPlayer("nap-9", "Khvicha Kvaratskhelia", "LW", 23, ["Gürcistan"], "Napoli", 183, "right", 80000000),
+      createPlayer("nap-10", "Victor Osimhen", "ST", 25, ["Nijerya"], "Napoli", 186, "right", 120000000),
+      createPlayer("nap-11", "Matteo Politano", "RW", 31, ["İtalya"], "Napoli", 171, "left", 15000000)
+    ]
+  },
+  // AS Roma
+  {
+    updatedAt: getISOString(),
+    id: "roma",
+    players: [
+      createPlayer("rom-1", "Rui Patrício", "GK", 36, ["Portekiz"], "AS Roma", 190, "right", 8000000),
+      createPlayer("rom-2", "Mile Svilar", "GK", 25, ["Belçika"], "AS Roma", 192, "right", 5000000),
+      createPlayer("rom-3", "Chris Smalling", "CB", 35, ["İngiltere"], "AS Roma", 194, "right", 10000000),
+      createPlayer("rom-4", "Gianluca Mancini", "CB", 28, ["İtalya"], "AS Roma", 190, "right", 25000000),
+      createPlayer("rom-5", "Leonardo Spinazzola", "LB", 31, ["İtalya"], "AS Roma", 186, "left", 15000000),
+      createPlayer("rom-6", "Rick Karsdorp", "RB", 29, ["Hollanda"], "AS Roma", 185, "right", 12000000),
+      createPlayer("rom-7", "Bryan Cristante", "CDM", 29, ["İtalya"], "AS Roma", 186, "right", 30000000),
+      createPlayer("rom-8", "Lorenzo Pellegrini", "CM", 28, ["İtalya"], "AS Roma", 186, "right", 40000000),
+      createPlayer("rom-9", "Paulo Dybala", "CAM", 31, ["Arjantin"], "AS Roma", 177, "left", 30000000),
+      createPlayer("rom-10", "Romelu Lukaku", "ST", 31, ["Belçika"], "AS Roma", 191, "right", 40000000),
+      createPlayer("rom-11", "Stephan El Shaarawy", "LW", 32, ["İtalya"], "AS Roma", 178, "right", 15000000)
+    ]
+  }
+];
+
+// ============================================
+// Legacy Compatibility Helpers (for gradual migration)
+// ============================================
+
+// These can be used temporarily while updating components
+export const mockLeagues = mockCompetitions.results.map(result => ({
+  id: result.id,
+  name: result.name,
+  icon: result.continent === "Europe" ? "🇪🇺" : "🌍"
+}));
+
+export const mockTeams = mockCompetitionClubs.flatMap(competition =>
+  competition.clubs.map(club => ({
+    id: club.id,
+    leagueId: competition.id,
+    name: club.name,
+    shortCode: club.name.substring(0, 3).toUpperCase()
+  }))
+);
+
+export const mockAvailablePlayers: Record<string, Array<{
+  id: string;
+  teamId: string;
+  teamName: string;
+  name: string;
+  position: string;
+  nationality: string;
+  marketValue: string;
+}>> = {};
+
+// Populate mockAvailablePlayers from mockPlayers
+mockPlayers.forEach(clubData => {
+  mockAvailablePlayers[clubData.id] = clubData.players.map(player => ({
+    id: player.id,
+    teamId: clubData.id,
+    teamName: mockTeams.find(t => t.id === clubData.id)?.name || clubData.id,
+    name: player.name,
+    position: player.position,
+    nationality: player.nationality[0] || "Unknown",
+    marketValue: `€${(player.marketValue / 1000000).toFixed(1)}M`
+  }));
+});

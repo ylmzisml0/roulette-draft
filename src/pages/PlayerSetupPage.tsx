@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Box, Container, Typography, Button, Card, CardContent, TextField, Grid, IconButton, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useGameStore, FormationPreset } from '../store/useGameStore';
@@ -44,7 +44,7 @@ export default function PlayerSetupPage() {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(to bottom right, #ffffff 0%, #f6fff7 50%, #e9f6ec 100%)',
+        background: '#FFFFFF',
         py: 4,
       }}
     >

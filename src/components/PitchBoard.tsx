@@ -17,7 +17,7 @@ interface PitchBoardProps {
 }
 
 export default function PitchBoard({ 
-  squadIndex, 
+  squadIndex: _squadIndex, 
   formation, 
   players, 
   onSlotClick,
@@ -52,11 +52,11 @@ export default function PitchBoard({
     if (!isDraggable || !players[slotId]) return;
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', slotId);
-    e.currentTarget.style.opacity = '0.5';
+    (e.currentTarget as HTMLElement).style.opacity = '0.5';
   };
 
   const handleDragEnd = (e: React.DragEvent) => {
-    e.currentTarget.style.opacity = '1';
+    (e.currentTarget as HTMLElement).style.opacity = '1';
   };
 
   const handleDragOver = (e: React.DragEvent) => {

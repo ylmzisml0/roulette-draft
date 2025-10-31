@@ -3,14 +3,17 @@ import { createTheme } from '@mui/material/styles';
 export const theme = createTheme({
   palette: {
     primary: {
-      main: '#1f4d2d',
+      main: '#09203F',
     },
     secondary: {
-      main: '#eef8f0',
+      main: '#209927',
     },
     text: {
-      primary: '#0b2d17',
+      primary: '#09203F',
     },
+  },
+  typography: {
+    fontFamily: '"Bahnschrift Condensed", "Bahnschrift", "Arial Narrow", Arial, sans-serif',
   },
   shape: {
     borderRadius: 3,

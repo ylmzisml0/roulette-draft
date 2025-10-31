@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { mockLeagues, mockTeams, mockAvailablePlayers } from '../data/mockData';
+import { mockAvailablePlayers } from '../data/mockData';
 
 export type FormationPreset = '4-3-3' | '4-4-2' | '3-5-2' | '4-2-3-1' | '4-1-4-1' | '5-3-2' | '5-2-3' | '4-5-1';
 
@@ -41,6 +41,9 @@ export type GameState = {
   isSquadOverviewOpen: boolean;
   isFormationModalOpen: boolean;
   formationModalSquadIndex: number | null;
+  
+  // Simulation State
+  simulationResult: any | null; // LeagueSimulationResponse
 };
 
 export const formationLayouts: Record<FormationPreset, PitchSlot[]> = {
@@ -163,17 +166,19 @@ const initialState: GameState = {
   isSquadOverviewOpen: false,
   isFormationModalOpen: false,
   formationModalSquadIndex: null,
+  simulationResult: null,
 };
 
 export const useGameStore = create<GameState & {
   // Actions
-  toggleLeague: (id: string) => void;
+  toggleLeague: (id: string, allTeams: Array<{ id: string; leagueId: string }>) => void;
   toggleTeam: (teamId: string) => void;
   initSquads: (configs: { name: string; formation: FormationPreset }[]) => void;
   hydrateRostersFromMock: () => void;
   finishSpin: (teamId: string, teamName: string) => void;
   continueAfterSpinResult: () => void;
   chooseDraftCandidate: (playerId: string) => void;
+  goBackToPlayerSelection: () => void;
   selectSlotForCandidate: (slotId: string) => void;
   confirmPick: () => void;
   changeFormationForSquad: (squadIndex: number, newFormation: FormationPreset) => void;
@@ -183,15 +188,37 @@ export const useGameStore = create<GameState & {
   openFormationModal: (squadIndex: number) => void;
   closeFormationModal: () => void;
   resetGame: () => void;
+  randomFillAllSquads: () => void;
+  setSimulationResult: (result: any) => void;
 }>((set, get) => ({
   ...initialState,
 
-  toggleLeague: (id: string) => {
-    set((state) => ({
-      selectedLeagues: state.selectedLeagues.includes(id)
-        ? state.selectedLeagues.filter(leagueId => leagueId !== id)
-        : [...state.selectedLeagues, id],
-    }));
+  toggleLeague: (id: string, allTeams: Array<{ id: string; leagueId: string }>) => {
+    set((state) => {
+      // If clicking the already selected league, deselect it
+      if (state.selectedLeagues.includes(id)) {
+        // Get teams from the deselected league
+        const teamsToDeselect = allTeams
+          .filter(team => team.leagueId === id)
+          .map(team => team.id);
+        
+        return {
+          selectedLeagues: [],
+          selectedTeams: state.selectedTeams.filter(teamId => !teamsToDeselect.includes(teamId)),
+        };
+      } else {
+        // Select new league - clear previous selection
+        // Get teams from the new league
+        const teamsToSelect = allTeams
+          .filter(team => team.leagueId === id)
+          .map(team => team.id);
+        
+        return {
+          selectedLeagues: [id],
+          selectedTeams: teamsToSelect,
+        };
+      }
+    });
   },
 
   toggleTeam: (teamId: string) => {
@@ -243,6 +270,14 @@ export const useGameStore = create<GameState & {
     set({
       draftPhase: 'chooseSlot',
       draftCandidate: playerId,
+    });
+  },
+
+  goBackToPlayerSelection: () => {
+    set({
+      draftPhase: 'choosePlayer',
+      draftCandidate: null,
+      selectedSlot: null,
     });
   },
 
@@ -384,7 +419,7 @@ export const useGameStore = create<GameState & {
       });
       
       // Third pass: find any empty slot for remaining players
-      playersToMap.forEach(({ oldSlot, playerId }) => {
+      playersToMap.forEach(({ playerId }) => {
         if (!Object.values(updatedPlayers).includes(playerId)) {
           const emptySlot = newFormationSlots.find(slot => !usedNewSlots.has(slot.slotId));
           if (emptySlot) {
@@ -470,5 +505,97 @@ export const useGameStore = create<GameState & {
 
   resetGame: () => {
     set(initialState);
+  },
+
+  randomFillAllSquads: () => {
+    const state = get();
+    const updatedSquads = [...state.squads];
+    const updatedAvailablePlayers = { ...state.availablePlayers };
+    
+    // Helper to check if player position matches slot
+    const positionMatches = (slotId: string, playerPosition: string): boolean => {
+      const pos = playerPosition.toUpperCase();
+      if (slotId === 'GK') return pos === 'GK';
+      if (slotId.includes('CB') || slotId === 'CB') return pos.includes('CB');
+      if (slotId.includes('LB')) return pos === 'LB';
+      if (slotId.includes('RB')) return pos === 'RB';
+      if (slotId.includes('WB')) return pos.includes('WB') || pos === 'LB' || pos === 'RB';
+      if (slotId.includes('DM') || slotId === 'CDM') return pos.includes('DM');
+      if (slotId.includes('CM')) return pos.includes('CM') || pos.includes('DM');
+      if (slotId.includes('AM') || slotId === 'CAM') return pos.includes('AM') || pos === 'CAM';
+      if (slotId.includes('LW')) return pos === 'LW';
+      if (slotId.includes('RW')) return pos === 'RW';
+      if (slotId.includes('ST')) return pos === 'ST' || pos === 'CF';
+      if (slotId.includes('LM') || slotId.includes('RM')) return pos.includes('M');
+      return true; // Default: any position
+    };
+    
+    updatedSquads.forEach(squad => {
+      const formationSlots = formationLayouts[squad.formation];
+      const requiredSlots = formationSlots.map(s => s.slotId);
+      const currentSlots = Object.keys(squad.players);
+      const neededSlots = requiredSlots.filter(slot => !currentSlots.includes(slot));
+      
+      // Shuffle needed slots for randomness
+      const shuffledSlots = [...neededSlots].sort(() => Math.random() - 0.5);
+      
+      // Fill needed slots with random available players
+      shuffledSlots.forEach(slotId => {
+        const allTeams = Object.keys(updatedAvailablePlayers);
+        // Shuffle teams for randomness
+        const shuffledTeams = [...allTeams].sort(() => Math.random() - 0.5);
+        
+        // Try to find a matching player
+        let foundPlayer: { teamId: string; playerId: string } | null = null;
+        
+        // First try: find position-matched player
+        for (const teamId of shuffledTeams) {
+          const availableIds = updatedAvailablePlayers[teamId] || [];
+          if (availableIds.length > 0) {
+            const teamPlayers = mockAvailablePlayers[teamId] || [];
+            // Shuffle available players for randomness
+            const shuffledAvailable = [...availableIds].sort(() => Math.random() - 0.5);
+            
+            for (const playerId of shuffledAvailable) {
+              const player = teamPlayers.find(p => p.id === playerId);
+              if (player && positionMatches(slotId, player.position)) {
+                foundPlayer = { teamId, playerId };
+                break;
+              }
+            }
+            
+            if (foundPlayer) break;
+          }
+        }
+        
+        // Fallback: take any available player
+        if (!foundPlayer) {
+          for (const teamId of shuffledTeams) {
+            const availableIds = updatedAvailablePlayers[teamId] || [];
+            if (availableIds.length > 0) {
+              const randomIndex = Math.floor(Math.random() * availableIds.length);
+              foundPlayer = { teamId, playerId: availableIds[randomIndex] };
+              break;
+            }
+          }
+        }
+        
+        if (foundPlayer) {
+          squad.players[slotId] = foundPlayer.playerId;
+          updatedAvailablePlayers[foundPlayer.teamId] = updatedAvailablePlayers[foundPlayer.teamId].filter(
+            id => id !== foundPlayer!.playerId
+          );
+        }
+      });
+    });
+    
+    set({
+      squads: updatedSquads,
+      availablePlayers: updatedAvailablePlayers,
+    });
+  },
+
+  setSimulationResult: (result: any) => {
+    set({ simulationResult: result });
   },
 }));

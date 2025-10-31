@@ -1,5 +1,4 @@
-import React, { useEffect } from 'react';
-import { Box, Container, Typography, Button, Card, CardContent, Grid, FormControlLabel, Checkbox, Divider } from '@mui/material';
+import { Box, Container, Typography, Button, Card, CardContent, Grid, FormControlLabel, Checkbox } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '../store/useGameStore';
 import { mockLeagues, mockTeams } from '../data/mockData';
@@ -7,21 +6,6 @@ import { mockLeagues, mockTeams } from '../data/mockData';
 export default function LeagueSelectionPage() {
   const navigate = useNavigate();
   const { selectedLeagues, selectedTeams, toggleLeague, toggleTeam, hydrateRostersFromMock } = useGameStore();
-
-  // Initialize all teams as selected when leagues are selected
-  useEffect(() => {
-    if (selectedLeagues.length > 0 && selectedTeams.length === 0) {
-      const teamsFromSelectedLeagues = mockTeams
-        .filter(team => selectedLeagues.includes(team.leagueId))
-        .map(team => team.id);
-      
-      teamsFromSelectedLeagues.forEach(teamId => {
-        if (!selectedTeams.includes(teamId)) {
-          toggleTeam(teamId);
-        }
-      });
-    }
-  }, [selectedLeagues, selectedTeams, toggleTeam]);
 
   const handleNext = () => {
     if (selectedTeams.length === 0) {
@@ -40,7 +24,7 @@ export default function LeagueSelectionPage() {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(to bottom right, #ffffff 0%, #f6fff7 50%, #e9f6ec 100%)',
+        background: '#FFFFFF',
         py: 4,
       }}
     >
@@ -68,18 +52,18 @@ export default function LeagueSelectionPage() {
             <Grid container spacing={2}>
               {mockLeagues.map((league) => (
                 <Grid item xs={12} sm={6} md={4} lg={2} key={league.id}>
-                  <Card
-                    sx={{
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      border: selectedLeagues.includes(league.id) ? '2px solid #1f4d2d' : '2px solid transparent',
-                      '&:hover': {
-                        backgroundColor: 'secondary.main',
-                        transform: 'scale(1.02)',
-                      },
-                    }}
-                    onClick={() => toggleLeague(league.id)}
-                  >
+                    <Card
+                      sx={{
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        border: selectedLeagues.includes(league.id) ? '2px solid #09203F' : '2px solid transparent',
+                        '&:hover': {
+                          backgroundColor: 'rgba(32, 153, 39, 0.1)',
+                          transform: 'scale(1.02)',
+                        },
+                      }}
+                      onClick={() => toggleLeague(league.id, mockTeams)}
+                    >
                     <CardContent sx={{ textAlign: 'center', py: 2 }}>
                       <Typography sx={{ fontSize: '2rem', mb: 1 }}>
                         {league.icon}
@@ -89,7 +73,7 @@ export default function LeagueSelectionPage() {
                       </Typography>
                       <Checkbox
                         checked={selectedLeagues.includes(league.id)}
-                        onChange={() => toggleLeague(league.id)}
+                        onChange={() => toggleLeague(league.id, mockTeams)}
                         color="primary"
                         sx={{ mt: 1 }}
                       />
