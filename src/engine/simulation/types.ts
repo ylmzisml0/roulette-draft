@@ -103,19 +103,19 @@ export interface GoalEvent extends BaseEvent {
 
 export interface YellowCardEvent extends BaseEvent {
   type: 'YELLOW';
-  reason?: 'Foul' | 'Dissent' | 'TimeWasting' | 'Other';
+  // No reason field - only minute, teamId, team, playerName
 }
 
 export interface RedCardEvent extends BaseEvent {
   type: 'RED';
-  reason?: 'SecondYellow' | 'SeriousFoul' | 'ProfessionalFoul' | 'Other';
+  // No reason field - only minute, teamId, team, playerName
 }
 
 export interface SubstitutionEvent extends BaseEvent {
   type: 'SUB';
   out?: string;
   in?: string;
-  reason?: 'Tactical' | 'Injury' | 'Fatigue';
+  // No reason field - only minute, teamId, team, out, in
 }
 
 // Internal types for calculation

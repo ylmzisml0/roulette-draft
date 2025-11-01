@@ -26,7 +26,7 @@ export default function LandingPage() {
         <Box
           sx={{
             pt: { xs: 6, md: 10 },
-            pb: { xs: 6, md: 8 },
+            pb: { xs: 3, md: 4 },
             textAlign: 'center',
             position: 'relative',
           }}
@@ -37,7 +37,7 @@ export default function LandingPage() {
               width: { xs: '100%', sm: '80%', md: '600px' },
               height: { xs: '250px', sm: '300px', md: '350px' },
               mx: 'auto',
-              mb: { xs: 3, md: 5 },
+              mb: { xs: 2, md: 3 },
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -63,23 +63,6 @@ export default function LandingPage() {
                 }}
               />
             </Box>
-          </Box>
-          
-          {/* Brand Name with Enhanced Styling */}
-          <Box sx={{ mb: { xs: 4, md: 6 } }}>
-            <Typography
-              variant="h6"
-              sx={{
-                color: '#09203F',
-                fontWeight: 400,
-                fontSize: { xs: '1rem', md: '1.25rem' },
-                mt: 3,
-                opacity: 0.8,
-                letterSpacing: '0.02em',
-              }}
-            >
-              Futbol oyuncularıyla şanslı draft deneyimi
-            </Typography>
           </Box>
         </Box>
 
@@ -111,7 +94,7 @@ export default function LandingPage() {
                   letterSpacing: '-0.01em',
                 }}
               >
-                Başlamaya Hazır mısın?
+                Başlamaya Hazır Mısın?
               </Typography>
             </Box>
             
@@ -126,8 +109,7 @@ export default function LandingPage() {
                 opacity: 0.85,
               }}
             >
-              Çarkı çevirin, takımınızı kurun ve en iyi kadroyu oluşturun! 
-              Şans ve strateji bir arada.
+              Çarkı çevir, takımını kur ve en iyi kadroyu oluştur!
             </Typography>
 
             <Button

@@ -53,6 +53,48 @@ export default function SimulationResultsPage() {
 
   const result = simulationResult as LeagueSimulationResponse;
 
+  // Calculate top scorers and assist leaders
+  const goalStats = new Map<string, number>();
+  const assistStats = new Map<string, number>();
+  const playerTeams = new Map<string, string>();
+
+  result.results.forEach((match) => {
+    match.events.forEach((event) => {
+      if (event.type === 'GOAL' && event.playerName) {
+        const current = goalStats.get(event.playerName) || 0;
+        goalStats.set(event.playerName, current + 1);
+        playerTeams.set(event.playerName, event.team);
+      }
+      if (event.type === 'GOAL' && event.assistBy) {
+        const current = assistStats.get(event.assistBy) || 0;
+        assistStats.set(event.assistBy, current + 1);
+        if (!playerTeams.has(event.assistBy)) {
+          playerTeams.set(event.assistBy, event.team);
+        }
+      }
+    });
+  });
+
+  // Top 10 scorers (maximum 10 players)
+  const topScorers = Array.from(goalStats.entries())
+    .map(([playerName, goals]) => ({
+      playerName,
+      goals,
+      team: playerTeams.get(playerName) || 'Unknown',
+    }))
+    .sort((a, b) => b.goals - a.goals)
+    .slice(0, 10); // Maximum 10 players
+
+  // Top 10 assist leaders (maximum 10 players)
+  const topAssists = Array.from(assistStats.entries())
+    .map(([playerName, assists]) => ({
+      playerName,
+      assists,
+      team: playerTeams.get(playerName) || 'Unknown',
+    }))
+    .sort((a, b) => b.assists - a.assists)
+    .slice(0, 10); // Maximum 10 players
+
   const getEventIcon = (type: string) => {
     switch (type) {
       case 'GOAL':
@@ -235,7 +277,7 @@ export default function SimulationResultsPage() {
               </TableContainer>
             </Card>
 
-            {/* Team Powers */}
+            {/* Top Scorers & Assist Leaders */}
             <Card
               sx={{
                 mt: 3,
@@ -253,89 +295,198 @@ export default function SimulationResultsPage() {
                 }}
               >
                 <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-                  💪 Takım Güç Analizi
+                  ⚽ Gol Krallığı
                 </Typography>
               </Box>
-              <CardContent>
-                <Grid container spacing={2}>
-                  {result.teamPowers.map((team) => (
-                    <Grid item xs={12} key={team.teamId}>
-                      <Box
-                        sx={{
-                          p: 2,
-                          borderRadius: 2,
-                          bgcolor: 'grey.50',
-                          mb: 1,
-                        }}
-                      >
-                        <Typography
-                          variant="subtitle2"
-                          sx={{ fontWeight: 'bold', mb: 1 }}
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: 'grey.50' }}>
+                      <TableCell sx={{ fontWeight: 'bold', py: 1 }}>#</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', py: 1 }}>Oyuncu</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', py: 1 }}>Takım</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 'bold', py: 1 }}>
+                        Gol
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {topScorers.length > 0 ? (
+                      topScorers.map((player, idx) => (
+                        <TableRow
+                          key={player.playerName}
+                          sx={{
+                            bgcolor: idx % 2 === 0 ? '#FFFFFF' : 'grey.50',
+                            '&:hover': { bgcolor: 'rgba(32, 153, 39, 0.08)' },
+                            transition: 'background-color 0.2s',
+                          }}
                         >
-                          {team.teamName}
-                        </Typography>
-                        <Stack spacing={1}>
-                          <Box>
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                mb: 0.5,
-                              }}
-                            >
-                              <Typography variant="caption">Güç</Typography>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                               <Typography
-                                variant="caption"
-                                sx={{ fontWeight: 'bold' }}
+                                variant="body2"
+                                sx={{
+                                  fontWeight: idx < 3 ? 'bold' : 'normal',
+                                  fontSize: '0.875rem',
+                                  minWidth: 24,
+                                }}
                               >
-                                {team.powerRating.toFixed(1)}
+                                {idx + 1}
                               </Typography>
+                              {idx === 0 && (
+                                <EmojiEvents sx={{ color: '#FFD700', fontSize: 18 }} />
+                              )}
                             </Box>
-                            <Box
+                          </TableCell>
+                          <TableCell>
+                            <Typography
+                              variant="body2"
                               sx={{
-                                height: 6,
-                                bgcolor: 'grey.300',
-                                borderRadius: 3,
-                                overflow: 'hidden',
+                                fontWeight: idx < 3 ? 'bold' : 'normal',
+                                fontSize: '0.875rem',
                               }}
                             >
-                              <Box
+                              {player.playerName}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
+                              {player.team}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="center">
+                            <Chip
+                              label={player.goals}
+                              size="small"
+                              color={idx === 0 ? 'warning' : idx < 3 ? 'success' : 'default'}
+                              sx={{
+                                fontWeight: 'bold',
+                                minWidth: 40,
+                                height: 24,
+                                fontSize: '0.75rem',
+                              }}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={4} align="center">
+                          <Typography variant="body2" color="text.secondary">
+                            Gol verisi bulunamadı
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Card>
+
+            {/* Assist Leaders */}
+            <Card
+              sx={{
+                mt: 3,
+                borderRadius: 3,
+                boxShadow: '0 4px 20px rgba(9, 32, 63, 0.1)',
+                border: '1px solid',
+                borderColor: 'primary.light',
+              }}
+            >
+              <Box
+                sx={{
+                  background: '#209927',
+                  p: 3,
+                  color: 'white',
+                }}
+              >
+                <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
+                  🎯 Asist Krallığı
+                </Typography>
+              </Box>
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: 'grey.50' }}>
+                      <TableCell sx={{ fontWeight: 'bold', py: 1 }}>#</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', py: 1 }}>Oyuncu</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', py: 1 }}>Takım</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 'bold', py: 1 }}>
+                        Asist
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {topAssists.length > 0 ? (
+                      topAssists.map((player, idx) => (
+                        <TableRow
+                          key={player.playerName}
+                          sx={{
+                            bgcolor: idx % 2 === 0 ? '#FFFFFF' : 'grey.50',
+                            '&:hover': { bgcolor: 'rgba(32, 153, 39, 0.08)' },
+                            transition: 'background-color 0.2s',
+                          }}
+                        >
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                              <Typography
+                                variant="body2"
                                 sx={{
-                                  height: '100%',
-                                  width: `${team.powerRating}%`,
-                                  background: '#209927',
+                                  fontWeight: idx < 3 ? 'bold' : 'normal',
+                                  fontSize: '0.875rem',
+                                  minWidth: 24,
                                 }}
-                              />
+                              >
+                                {idx + 1}
+                              </Typography>
+                              {idx === 0 && (
+                                <EmojiEvents sx={{ color: '#FFD700', fontSize: 18 }} />
+                              )}
                             </Box>
-                          </Box>
-                          <Grid container spacing={1}>
-                            <Grid item xs={6}>
-                              <Typography variant="caption" color="text.secondary">
-                                Hücum {team.attackRating.toFixed(0)}
-                              </Typography>
-                            </Grid>
-                            <Grid item xs={6}>
-                              <Typography variant="caption" color="text.secondary">
-                                Defans {team.defenseRating.toFixed(0)}
-                              </Typography>
-                            </Grid>
-                            <Grid item xs={6}>
-                              <Typography variant="caption" color="text.secondary">
-                                Orta {team.midfieldRating.toFixed(0)}
-                              </Typography>
-                            </Grid>
-                            <Grid item xs={6}>
-                              <Typography variant="caption" color="text.secondary">
-                                Kaleci {team.keeperRating.toFixed(0)}
-                              </Typography>
-                            </Grid>
-                          </Grid>
-                        </Stack>
-                      </Box>
-                    </Grid>
-                  ))}
-                </Grid>
-              </CardContent>
+                          </TableCell>
+                          <TableCell>
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontWeight: idx < 3 ? 'bold' : 'normal',
+                                fontSize: '0.875rem',
+                              }}
+                            >
+                              {player.playerName}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
+                              {player.team}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="center">
+                            <Chip
+                              label={player.assists}
+                              size="small"
+                              color={idx === 0 ? 'warning' : idx < 3 ? 'success' : 'default'}
+                              sx={{
+                                fontWeight: 'bold',
+                                minWidth: 40,
+                                height: 24,
+                                fontSize: '0.75rem',
+                              }}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={4} align="center">
+                          <Typography variant="body2" color="text.secondary">
+                            Asist verisi bulunamadı
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             </Card>
           </Grid>
 
